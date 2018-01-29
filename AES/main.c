@@ -35,11 +35,11 @@ int main(int argc, char **argv){
     return -1;
   }
 
+  /* read files from a directory, then encrypt and decrypt. */
   char base_path[MAX_NAME_LEN];
   memset(base_path, '\0', sizeof(base_path));
   strcpy(base_path, "./plaintexts/");
   struct file_list fl = read_dir(base_path);
-
   for(int i = 0; i < fl.file_num; i++){
 
     char path[MAX_NAME_LEN];
