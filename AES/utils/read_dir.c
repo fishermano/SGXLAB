@@ -44,12 +44,11 @@ char *get_file_text(char *path){
   fseek(fp, 0, SEEK_END);
   char *text = (char *)malloc(ftell(fp));
   text[0] = 0;
-
   rewind(fp);
   char str[(CHAR_BUFFER + 1)];
   while(fgets(str, CHAR_BUFFER, fp) != NULL){
     strcat(text, str);
   }
-  fclose(fp);
+  //fclose(fp);
   return text;
 }

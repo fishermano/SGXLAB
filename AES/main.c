@@ -39,10 +39,12 @@ int main(int argc, char **argv){
   char base_path[MAX_NAME_LEN];
   memset(base_path, '\0', sizeof(base_path));
   strcpy(base_path, "./plaintexts/");
-  struct file_list fl = read_dir(base_path);
+  struct file_list fl;
+  fl = read_dir(base_path);
   for(int i = 0; i < fl.file_num; i++){
 
-    char path[MAX_NAME_LEN];
+    printf("%s\n", fl.files[i]);
+    char path[MAX_NAME_LEN] = "";
     memset(path, '\0', sizeof(path));
     strcpy(path, "./plaintexts/");
     strcat(path, fl.files[i]);
@@ -59,9 +61,9 @@ int main(int argc, char **argv){
     char *plaintext = (char *)aes_decrypt(&de, ciphertext, &len);
 
     if (strncmp(plaintext, input, olen))
-      printf("FAIL: enc/dec failed for \"%s\"\n", input);
+      printf("FAIL: enc/dec failed\n");
     else
-      printf("OK: enc/dec ok for \"%s\"\n", plaintext);
+      printf("OK: enc/dec ok \n");
 
     free(ciphertext);
     free(plaintext);
