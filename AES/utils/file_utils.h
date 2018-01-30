@@ -12,3 +12,5 @@ struct file_list{
 struct file_list read_dir(char *base_path);
 
 char *get_file_text(char *path);
+
+void write_result(char * res_file, int p_len, int c_len, double enc_time, double dec_time, double renc_time);

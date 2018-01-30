@@ -3,14 +3,14 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "read_dir.h"
+#include "file_utils.h"
 
 struct file_list read_dir(char *base_path){
   DIR *dir;
   struct dirent *ptr;
   struct file_list fl;
   for(int i = 0; i < MAX_FILE_NUM; i++){
-    fl.files[i] = NULL;
+    fl.files[i] = "";
   }
   fl.file_num = 0;
   int j = 0;
@@ -36,19 +36,35 @@ struct file_list read_dir(char *base_path){
 }
 
 char *get_file_text(char *path){
-  FILE *fp = NULL;
+  FILE *fp;
+  char *text;
+
   fp = fopen(path, "r");
   if (fp == NULL){
     printf("cannot open file %s\n", path);
+    return NULL;
   }
   fseek(fp, 0, SEEK_END);
-  char *text = (char *)malloc(ftell(fp));
-  text[0] = 0;
+  int len = ftell(fp);
+  text = (char *)malloc((len + 1) * sizeof(char));
   rewind(fp);
-  char str[(CHAR_BUFFER + 1)];
-  while(fgets(str, CHAR_BUFFER, fp) != NULL){
-    strcat(text, str);
-  }
-  //fclose(fp);
+  // char str[(CHAR_BUFFER + 1)];
+  // while(fgets(str, CHAR_BUFFER, fp) != NULL){
+  //   strcat(text, str);
+  // }
+  len = fread(text, 1, len, fp);
+  text[len] = '\0';
+  fclose(fp);
   return text;
+}
+
+void write_result(char *res_file, int p_len, int c_len, double enc_time, double dec_time, double renc_time){
+  FILE *out = fopen(res_file, "a");
+  if (out == NULL){
+    printf("cannot open file %s\n", res_file);
+    return;
+  }
+  fprintf(out, "%d,%d,%lf,%lf,%lf\n", p_len, c_len, enc_time, dec_time, renc_time);
+  fclose(out);
+  return;
 }

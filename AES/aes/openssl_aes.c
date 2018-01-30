@@ -40,7 +40,7 @@ unsigned char *aes_encrypt(EVP_CIPHER_CTX *e, unsigned char *plaintext, int *len
   EVP_EncryptFinal_ex(e, ciphertext+c_len, &f_len);
 
   *len = c_len + f_len;
-return ciphertext;
+  return ciphertext;
 }
 
 unsigned char *aes_decrypt(EVP_CIPHER_CTX *e, unsigned char *ciphertext, int *len)
