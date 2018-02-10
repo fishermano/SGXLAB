@@ -1,0 +1,8 @@
+/* ss.edl - an enclave for sealing secrets */
+
+enclave{
+  trusted{
+    public void ecall_create_sealed_policy(void);
+    public void ecall_perform_sealed_policy(void);
+  };
+};

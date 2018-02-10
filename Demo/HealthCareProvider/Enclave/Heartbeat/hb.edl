@@ -1,0 +1,7 @@
+/* hb.edl - an enclave for initialize heartbeat */
+
+enclave{
+  trusted{
+    public void ecall_start_heartbeat(void);
+  };
+};
