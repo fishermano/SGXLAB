@@ -44,7 +44,7 @@ else
 endif
 
 App_C_Files := Application/demo_app.c
-App_Include_Paths := -IApplication -I$(SGX_SDK)/include
+App_Include_Paths := -IApplication -IApplication/include -I$(SGX_SDK)/include
 
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
 
