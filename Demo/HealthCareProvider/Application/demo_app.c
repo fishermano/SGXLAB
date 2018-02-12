@@ -1,10 +1,46 @@
-#include "demo_app.h"
+/*
+  Needed for defining integer range, eg. INT_MAX
+*/
+#include <limits.h>
+
+/*
+  Needed for untrusted enclave ocall interface
+*/
 #include "demo_enclave_u.h"
+
+/*
+  Needed for some data structures
+*/
+#include "demo_app.h"
+
+/*
+  Needed to perform some utility functions
+*/
 #include "utils.h"
 
-sgx_enclave_id_t global_eid = 0;
+/*
+  Needed to create enclave and do ecall
+*/
+#include "sgx_urts.h"
 
-/* Check error conditions for loading enclave */
+/*
+  Needed to call untrusted key exchange library APIs, i.e. sgx_ra_proc_msg2.
+*/
+#include "sgx_ukey_exchange.h"
+
+/*
+  Needed to query extended epid group id.
+*/
+#include "sgx_uae_service.h"
+
+/*
+  define the enclave id
+*/
+static sgx_enclave_id_t global_eid = 0;
+
+/*
+  print error message for loading enclave
+*/
 void print_error_message(sgx_status_t ret)
 {
     size_t idx = 0;
@@ -92,15 +128,111 @@ int initialize_enclave(void)
     return 0;
 }
 
+/*
+  define the untrusted enclave ocall functions
+*/
 void ocall_print(const char* str){
   printf("%s\n", str);
 }
 
+/*
+  entry of the application
+*/
 int SGX_CDECL main(int argc, char *argv[]){
-  (void)(argc);
-  (void)(argv);
 
-  sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+  /*
+    define result status of ecall function
+  */
+  int ret = 0;
+  sgx_status_t status = SGX_SUCCESS;
+
+  /*
+    define msg0 - msg3 and the attestation result message
+  */
+  ra_samp_request_header_t *p_msg0_full = NULL;
+  ra_samp_response_header_t *p_msg0_resp_full = NULL;
+  ra_samp_request_header_t *p_msg1_full = NULL;
+  ra_samp_response_header_t *p_msg2_full = NULL;
+  ra_samp_request_header_t *p_msg3_full = NULL;
+  sgx_ra_msg3_t *p_msg3 = NULL;
+  ra_samp_response_header_t *p_att_result_msg_full = NULL;
+
+  /*
+    define retry parameters
+  */
+  int enclave_lost_retry_time = 1;
+  int busy_retry_time = 4;
+
+  /*
+    define remote attestation context
+  */
+  sgx_ra_context_t context = INT_MAX;
+
+  /*
+    define verification parameters
+  */
+  int32_t verify_index = -1;
+  int32_t verification_samples = sizeof(msg1_samples)/sizeof(msg1_samples[0]);
+  #define VERIFICATION_INDEX_IS_VALID() (verify_index > 0 && verify_index <= verification_samples)
+  #define GET_VERIFICATION_ARRAY_INDEX() (verify_index-1)
+
+  /*
+    define the output source file
+  */
+  FILE *OUTPUT = stdout;
+
+  if(argc > 1){
+    verify_index = atoi(argv[1]);
+    if(VERIFICATION_INDEX_IS_VALID()){
+      fprintf(OUTPUT, "\nVerifying precomputed attestation messages using precomputed values# %d\n", verify_index);
+    }else{
+      fprintf(OUTPUT, "\nValid invocations are:\n");
+      fprintf(OUTPUT, "\n\t./demo_app\n");
+      fprintf(OUTPUT, "\n\t./demo_app <verification index>\n");
+      fprintf(OUTPUT, "\nValid indices are [1 - %d]\n",
+              verification_samples);
+      fprintf(OUTPUT, "\nUsing a verification index uses precomputed messages to assist debugging the remote attestation trusted broker.\n");
+      return -1;
+    }
+  }
+
+  /*
+    preparation for remote attestation by configuring extended epid group id - msg0.
+  */
+
+  {
+    uint32_t extended_epid_group_id = 0;
+    ret = sgx_get_extended_epid_group_id(&extended_epid_group_id);
+    if(SGX_SUCCESS != ret){
+      ret = -1;
+      fprintf(OUTPUT, "\nError, call sgx_get_extended_epid_group_id fail [%s].", __FUNCTION__);
+      return ret;
+    }
+    fprintf(OUTPUT, "\nCall sgx_get_extended_epid_group_id success.");
+
+    p_msg0_full = (ra_samp_request_header_t*) malloc(sizeof(ra_samp_request_header_t) + sizeof(uint32_t));
+
+    if(NULL == p_msg0_full){
+      ret = -1;
+      goto CLEANUP;
+    }
+    p_msg0_full->type = TYPE_RA_MSG0;
+    p_msg0_full->size = sizeof(uint32_t);
+
+    *(uint32_t*)((uint8_t*)p_msg0_full + sizeof(ra_samp_request_header_t)) = extended_epid_group_id;
+    {
+
+      fprintf(OUTPUT, "\nMSG0 body generated -\n");
+
+      PRINT_BYTE_ARRAY(OUTPUT, p_msg0_full->body, p_msg0_full->size);
+
+    }
+
+    fprintf(OUTPUT, "\nSending msg0 to remote attestation trusted broker.\n");
+
+  }
+
+
 
   if(initialize_enclave() < 0){
     printf("Enter a character before exit ... \n");
@@ -125,12 +257,14 @@ int SGX_CDECL main(int argc, char *argv[]){
   ecall_perform_fun_1(global_eid);
   ecall_perform_fun_2(global_eid);
 
+CLEANUP:
+
   sgx_destroy_enclave(global_eid);
 
   printf("\n\nInfo: Enclave Successfully Retrurned. \n");
 
   printf("Enter a character before exit ... \n");
   getchar();
-  return 0;
+  return ret;
 
 }

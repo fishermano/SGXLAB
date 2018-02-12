@@ -1,10 +1,11 @@
+#include "sgx_ukey_exchange.h"
+
 #include "utils.h"
+#include "remote_attestation_result.h"
 
 // Some utility functions to output some of the data structures passed between
-// the ISV app and the remote attestation service provider.
-void PRINT_BYTE_ARRAY(
-    FILE *file, void *mem, uint32_t len)
-{
+// the app and the trusted broker.
+void PRINT_BYTE_ARRAY(FILE *file, void *mem, uint32_t len){
     if(!mem || !len)
     {
         fprintf(file, "\n( null )\n");
@@ -22,10 +23,7 @@ void PRINT_BYTE_ARRAY(
     fprintf(file, "\n}\n");
 }
 
-void PRINT_ATTESTATION_SERVICE_RESPONSE(
-    FILE *file,
-    ra_samp_response_header_t *response)
-{
+void PRINT_ATTESTATION_SERVICE_RESPONSE(FILE *file, ra_samp_response_header_t *response){
     if(!response)
     {
         fprintf(file, "\t\n( null )\n");

@@ -3,12 +3,11 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-# include <unistd.h>
-# include <pwd.h>
+#include <unistd.h>
+#include <pwd.h>
 
 #include "sgx_error.h"       /* sgx_status_t */
 #include "sgx_eid.h"     /* sgx_enclave_id_t */
-#include "sgx_urts.h"     /* Needed to create enclave and do ecall */
 
 // In addition to generating and sending messages, this application
 // can use pre-generated messages to verify the generation of
@@ -28,7 +27,7 @@
 
 # define MAX_PATH FILENAME_MAX
 
-extern sgx_enclave_id_t global_eid;
+//extern sgx_enclave_id_t global_eid;
 
 uint8_t* msg1_samples[] = { msg1_sample1, msg1_sample2 };
 uint8_t* msg2_samples[] = { msg2_sample1, msg2_sample2 };

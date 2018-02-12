@@ -7,6 +7,8 @@
  * the trusted broker. Requests and responses in the remote attestation
  * sample.
  */
+#include <stdint.h>
+
 typedef enum _ra_msg_type_t
 {
      TYPE_RA_MSG0,
