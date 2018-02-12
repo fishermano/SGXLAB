@@ -230,19 +230,43 @@ int SGX_CDECL main(int argc, char *argv[]){
 
     fprintf(OUTPUT, "\nSending msg0 to remote attestation trusted broker.\n");
 
+    ret = ra_network_send_receive("http://DemoTesting.vt.edu",
+        p_msg0_full,
+        &p_msg0_resp_full);
+    if (ret != 0)
+    {
+        fprintf(OUTPUT, "\nError, ra_network_send_receive for msg0 failed "
+            "[%s].", __FUNCTION__);
+        goto CLEANUP;
+    }
+    fprintf(OUTPUT, "\nSent MSG0 to remote attestation service.\n");
   }
 
+  /*
+    Remote attestation will be initiated the trusted broker challengs the demo_app of if the demo_app detects it doesn't have the credentials (shared secrets) from a previous attestation required for secure communication with the trusted broker
+  */
 
+  {
 
-  if(initialize_enclave() < 0){
-    printf("Enter a character before exit ... \n");
-    getchar();
-    return -1;
+    do{
+      /*
+        demo_app initializes its enclave
+       */
+      if(initialize_enclave() < 0){
+        ret = -1;
+        fprintf(OUTPUT, "\nError, enclave initialization Failed [%s].",
+                __FUNCTION__);
+        goto CLEANUP;
+      }
+
+      fprintf(OUTPUT, "\nEncalve initialization success.\n");
+
+      ret = ecall_init_ra(global_eid, &status, false, &context);
+
+    }while(SGX_ERROR_ENCLAVE_LOST == ret && enclave_lost_retry_time--);
   }
 
   printf("***Remote Attestation Functionality***\n");
-  ecall_init_ra(global_eid);
-  ecall_close_ra(global_eid);
   ecall_verify_att_result_mac(global_eid);
   ecall_put_secrets(global_eid);
 

@@ -44,7 +44,7 @@ else
 endif
 
 App_C_Files := $(wildcard Application/*.c)
-App_Include_Paths := -IApplication -IApplication/include -I$(SGX_SDK)/include
+App_Include_Paths := -I. -IIncludes -IApplication -IApplication/include -I$(SGX_SDK)/include
 
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
 
@@ -61,7 +61,7 @@ else
 endif
 
 App_Cpp_Flags := $(App_C_Flags) -std=c++11
-App_Link_Flags := $(SGX_COMMON_CFLAGS) -L$(SGX_LIBRARY_PATH) -l$(Urts_Library_Name) -lpthread
+App_Link_Flags := $(SGX_COMMON_CFLAGS) -L$(SGX_LIBRARY_PATH) -LThirdPartyLibrary -l$(Urts_Library_Name) -lpthread -lremote_attestation -Wl,-rpath=$(CURDIR)/ThirdPartyLibrary -Wl,-rpath=$(CURDIR)
 
 ifneq ($(SGX_MODE), HW)
 	App_Link_Flags += -lsgx_uae_service_sim
@@ -103,9 +103,9 @@ Enclave_Cpp_Flags := $(Enclave_C_Flags) -std=c++11 -nostdinc++
 #       Use `--start-group' and `--end-group' to link these libraries.
 # Do NOT move the libraries linked with `--start-group' and `--end-group' within `--whole-archive' and `--no-whole-archive' options.
 # Otherwise, you may get some undesirable errors.
-Enclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) -LEnclave/GMP -LEnclave/PBC -LEnclave/MyObjects\
+Enclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) \
 	-Wl,--whole-archive -l$(Trts_Library_Name) -Wl,--no-whole-archive \
-	-Wl,--start-group -lsgx_tstdc -lsgx_tcxx -l$(Crypto_Library_Name) -l$(Service_Library_Name) -Wl,--end-group \
+	-Wl,--start-group -lsgx_tstdc -lsgx_tcxx -lsgx_tkey_exchange -l$(Crypto_Library_Name) -l$(Service_Library_Name) -Wl,--end-group \
 	-Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined \
 	-Wl,-pie,-eenclave_entry -Wl,--export-dynamic  \
 	-Wl,--defsym,__ImageBase=0 -Wl,--gc-sections   \
@@ -175,15 +175,15 @@ Application/demo_enclave_u.c: $(SGX_EDGER8R) Enclave/demo_enclave.edl
 		@echo "GEN => $@"
 
 Application/demo_enclave_u.o: Application/demo_enclave_u.c
-	@$(CC) $(App_C_Flags) -c $< -o $@
+	@$(CXX) $(App_C_Flags) -c $< -o $@
 	@echo "GEN => $@"
 
 Application/%.o: Application/%.c
-	@$(CC) $(App_C_Flags) -c $< -o $@
-	@echo "CC  <=  $<"
+	@$(CXX) $(App_C_Flags) -c $< -o $@
+	@echo "CXX  <=  $<"
 
 $(App_Name): Application/demo_enclave_u.o $(App_C_Objects)
-	@$(CC) $^ -o $@ $(App_Link_Flags)
+	@$(CXX) $^ -o $@ $(App_Link_Flags)
 	@echo "LINK => $@"
 
 .config_$(Build_Mode)_$(SGX_ARCH):

@@ -3,6 +3,8 @@
 #include "utils.h"
 #include "remote_attestation_result.h"
 
+#include "ThirdPartyLibrary/remote_attestation.h"
+
 // Some utility functions to output some of the data structures passed between
 // the app and the trusted broker.
 void PRINT_BYTE_ARRAY(FILE *file, void *mem, uint32_t len){
@@ -83,4 +85,72 @@ void PRINT_ATTESTATION_SERVICE_RESPONSE(FILE *file, ra_samp_response_header_t *r
         fprintf(file, "\nERROR in printing out the response. "
                        "Response of type not supported %d\n", response->type);
     }
+}
+
+/* Used to send requests to the service provider sample.  It simulates network communication between the demo_app and the trusted broker.  This would be modified in a real product to use the proper IP communication.
+
+ * @param server_url String name of the server URL
+ * @param p_req Pointer to the message to be sent.
+ * @param p_resp Pointer to a pointer of the response message.
+
+ * @return int
+*/
+
+int ra_network_send_receive(const char *server_url, const ra_samp_request_header_t *p_req, ra_samp_response_header_t **p_resp){
+  int ret = 0;
+  ra_samp_response_header_t *p_resp_msg;
+
+  if((NULL == server_url) || (NULL == p_req) || (NULL == p_resp)){
+    ret = -1;
+    return ret;
+  }
+
+  switch (p_req->type) {
+    case TYPE_RA_MSG0:
+      ret = sp_ra_proc_msg0_req((const sample_ra_msg0_t*)((uint8_t*)p_req
+          + sizeof(ra_samp_request_header_t)),
+          p_req->size);
+      if (0 != ret)
+      {
+          fprintf(stderr, "\nError, call sp_ra_proc_msg1_req fail [%s].",
+              __FUNCTION__);
+      }
+      break;
+    case TYPE_RA_MSG1:
+      ret = sp_ra_proc_msg1_req((const sample_ra_msg1_t*)((uint8_t*)p_req
+          + sizeof(ra_samp_request_header_t)),
+          p_req->size,
+          &p_resp_msg);
+      if(0 != ret)
+      {
+          fprintf(stderr, "\nError, call sp_ra_proc_msg1_req fail [%s].",
+              __FUNCTION__);
+      }
+      else
+      {
+          *p_resp = p_resp_msg;
+      }
+      break;
+    case TYPE_RA_MSG3:
+      ret = sp_ra_proc_msg3_req((const sample_ra_msg3_t*)((uint8_t*)p_req +
+          sizeof(ra_samp_request_header_t)),
+          p_req->size,
+          &p_resp_msg);
+      if(0 != ret)
+      {
+          fprintf(stderr, "\nError, call sp_ra_proc_msg3_req fail [%s].",
+              __FUNCTION__);
+      }
+      else
+      {
+          *p_resp = p_resp_msg;
+      }
+      break;
+    default:
+      ret = -1;
+      fprintf(stderr, "\nError, unknown remote attestation message type. Type = %d [%s].", p_req->type, __FUNCTION__);
+      break;
+  }
+
+  return ret;
 }
