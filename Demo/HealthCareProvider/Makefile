@@ -44,7 +44,7 @@ else
 endif
 
 App_C_Files := $(wildcard Application/*.c)
-App_Include_Paths := -I. -IIncludes -IApplication -IApplication/include -I$(SGX_SDK)/include
+App_Include_Paths := -I$(SGX_SDK)/include -I. -IIncludes -IApplication -IApplication/include
 
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
 
@@ -61,7 +61,7 @@ else
 endif
 
 App_Cpp_Flags := $(App_C_Flags) -std=c++11
-App_Link_Flags := $(SGX_COMMON_CFLAGS) -L$(SGX_LIBRARY_PATH) -LThirdPartyLibrary -l$(Urts_Library_Name) -lpthread -lremote_attestation -Wl,-rpath=$(CURDIR)/ThirdPartyLibrary -Wl,-rpath=$(CURDIR)
+App_Link_Flags := $(SGX_COMMON_CFLAGS) -L$(SGX_LIBRARY_PATH) -LThirdPartyLibrary -l$(Urts_Library_Name) -lsgx_ukey_exchange -lpthread -lremote_attestation -Wl,-rpath=$(CURDIR)/ThirdPartyLibrary -Wl,-rpath=$(CURDIR)
 
 ifneq ($(SGX_MODE), HW)
 	App_Link_Flags += -lsgx_uae_service_sim
@@ -175,11 +175,11 @@ Application/demo_enclave_u.c: $(SGX_EDGER8R) Enclave/demo_enclave.edl
 		@echo "GEN => $@"
 
 Application/demo_enclave_u.o: Application/demo_enclave_u.c
-	@$(CXX) $(App_C_Flags) -c $< -o $@
-	@echo "GEN => $@"
+	@$(CC) $(App_C_Flags) -c $< -o $@
+	@echo "CC <= $<"
 
 Application/%.o: Application/%.c
-	@$(CXX) $(App_C_Flags) -c $< -o $@
+	@$(CXX) $(App_Cpp_Flags) -c $< -o $@
 	@echo "CXX  <=  $<"
 
 $(App_Name): Application/demo_enclave_u.o $(App_C_Objects)
@@ -201,11 +201,11 @@ Enclave/demo_enclave_t.o: Enclave/demo_enclave_t.c
 	@echo "CC   <=  $<"
 
 Enclave/%.o: Enclave/%.c
-	@$(CC) $(Enclave_C_Flags) -c $< -o $@
-	@echo "CC  <=  $<"
+	@$(CXX) $(App_Cpp_Flags) -c $< -o $@
+	@echo "CXX  <=  $<"
 
 $(Enclave_Name): Enclave/demo_enclave_t.o $(Enclave_C_Objects)
-	@$(CC) $^ -o $@ $(Enclave_Link_Flags)
+	@$(CXX) $^ -o $@ $(Enclave_Link_Flags)
 	@echo "LINK =>  $@"
 
 $(Signed_Enclave_Name): $(Enclave_Name)
