@@ -165,6 +165,40 @@ sgx_status_t key_derivation(const sgx_ec256_dh_shared_t* shared_key,
 #pragma message ("Default key derivation function is used.")
 #endif
 
+int consttime_memequal(const void *b1, const void *b2, size_t len){
+	const unsigned char *c1 = reinterpret_cast<const unsigned char *>(b1), *c2 = reinterpret_cast<const unsigned char *>(b2);
+	unsigned int res = 0;
+
+	while (len--)
+		res |= *c1++ ^ *c2++;
+
+	/*
+	 * Map 0 to 1 and [1, 256) to 0 using only constant-time
+	 * arithmetic.
+	 *
+	 * This is not simply `!res' because although many CPUs support
+	 * branchless conditional moves and many compilers will take
+	 * advantage of them, certain compilers generate branches on
+	 * certain CPUs for `!res'.
+	 */
+	return (1 & ((res - 1) >> 8));
+}
+
+// This ecall is a wrapper of sgx_ra_init to create the trusted
+// KE exchange key context needed for the remote attestation
+// SIGMA API's. Input pointers aren't checked since the trusted stubs
+// copy them into EPC memory.
+//
+// @param b_pse Indicates whether the ISV app is using the
+//              platform services.
+// @param p_context Pointer to the location where the returned
+//                  key context is to be copied.
+//
+// @return Any error return from the create PSE session if b_pse
+//         is true.
+// @return Any error returned from the trusted key exchange API
+//         for creating a key context.
+
 sgx_status_t ecall_init_ra(int b_pse, sgx_ra_context_t *p_context){
   ocall_print("testing enclave function: ecall_init_ra()");
 
@@ -192,6 +226,13 @@ sgx_status_t ecall_init_ra(int b_pse, sgx_ra_context_t *p_context){
 
 }
 
+// Closes the tKE key context used during the SIGMA key
+// exchange.
+//
+// @param context The trusted KE library key context.
+//
+// @return Return value from the key context close API
+
 sgx_status_t SGXAPI ecall_close_ra(sgx_ra_context_t context){
   ocall_print("testing enclave function: ecall_close_ra()");
 
@@ -200,12 +241,110 @@ sgx_status_t SGXAPI ecall_close_ra(sgx_ra_context_t context){
   return ret;
 }
 
-void ecall_verify_att_result_mac(void){
+// Verify the mac sent in att_result_msg from the SP using the
+// MK key. Input pointers aren't checked since the trusted stubs
+// copy them into EPC memory.
+//
+//
+// @param context The trusted KE library key context.
+// @param p_message Pointer to the message used to produce MAC
+// @param message_size Size in bytes of the message.
+// @param p_mac Pointer to the MAC to compare to.
+// @param mac_size Size in bytes of the MAC
+//
+// @return SGX_ERROR_INVALID_PARAMETER - MAC size is incorrect.
+// @return Any error produced by tKE  API to get SK key.
+// @return Any error produced by the AESCMAC function.
+// @return SGX_ERROR_MAC_MISMATCH - MAC compare fails.
+sgx_status_t ecall_verify_att_result_mac(sgx_ra_context_t context, uint8_t* p_message, size_t message_size, uint8_t* p_mac, size_t mac_size){
   ocall_print("testing enclave function: ecall_verify_att_result_mac()");
-  return;
+
+  sgx_status_t ret;
+  sgx_ec_key_128bit_t mk_key;
+
+  if(mac_size != sizeof(sgx_mac_t)){
+    ret = SGX_ERROR_INVALID_PARAMETER;
+    return ret;
+  }
+  if(message_size > UINT32_MAX){
+    ret = SGX_ERROR_INVALID_PARAMETER;
+    return ret;
+  }
+
+  do{
+    uint8_t mac[SGX_CMAC_MAC_SIZE] = {0};
+
+    ret = sgx_ra_get_keys(context, SGX_RA_KEY_MK, &mk_key);
+    if(SGX_SUCCESS != ret){
+      break;
+    }
+    ret = sgx_rijndael128_cmac_msg(&mk_key, p_message, (uint32_t)message_size, &mac);
+    if(SGX_SUCCESS != ret) {
+      break;
+    }
+    if(0 == consttime_memequal(p_mac, mac, sizeof(mac))){
+      ret = SGX_ERROR_MAC_MISMATCH;
+      break;
+    }
+  }while(0);
+
+  return ret;
 }
 
-void ecall_put_secrets(void){
+// Generate a secret information for the SP encrypted with SK.
+// Input pointers aren't checked since the trusted stubs copy
+// them into EPC memory.
+//
+// @param context The trusted KE library key context.
+// @param p_secret Message containing the secret.
+// @param secret_size Size in bytes of the secret message.
+// @param p_gcm_mac The pointer the the AESGCM MAC for the
+//                 message.
+//
+// @return SGX_ERROR_INVALID_PARAMETER - secret size if
+//         incorrect.
+// @return Any error produced by tKE  API to get SK key.
+// @return Any error produced by the AESGCM function.
+// @return SGX_ERROR_UNEXPECTED - the secret doesn't match the
+//         expected value.
+
+sgx_status_t ecall_put_secrets(sgx_ra_context_t context, uint8_t *p_secret, uint32_t secret_size, uint8_t *p_gcm_mac){
   ocall_print("testing enclave function: ecall_put_secrets()");
-  return;
+
+  sgx_status_t ret = SGX_SUCCESS;
+  sgx_ec_key_128bit_t sk_key;
+
+  do{
+    if(secret_size != 8){
+      ret = SGX_ERROR_INVALID_PARAMETER;
+      break;
+    }
+
+    ret = sgx_ra_get_keys(context, SGX_RA_KEY_SK, &sk_key);
+    if(SGX_SUCCESS != ret){
+      break;
+    }
+
+    uint8_t aes_gcm_iv[12] = {0};
+    ret = sgx_rijndael128GCM_decrypt(&sk_key, p_secret, secret_size, &g_secret[0], &aes_gcm_iv[0], 12, NULL, 0, (const sgx_aes_gcm_128bit_tag_t *)(p_gcm_mac));
+
+    uint32_t i;
+    bool secret_match = true;
+    for(i=0;i<secret_size;i++){
+        if(g_secret[i] != i){
+          secret_match = false;
+        }
+    }
+
+    if(!secret_match){
+      ret = SGX_ERROR_UNEXPECTED;
+    }
+
+    // Once the server has the shared secret, it should be sealed to
+    // persistent storage for future use. This will prevents having to
+    // perform remote attestation until the secret goes stale. Once the
+    // enclave is created again, the secret can be unsealed.
+  }while(0);
+
+  return ret;
 }

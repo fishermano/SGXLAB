@@ -12,6 +12,23 @@ typedef struct ms_ecall_close_ra_t {
 	sgx_ra_context_t ms_context;
 } ms_ecall_close_ra_t;
 
+typedef struct ms_ecall_verify_att_result_mac_t {
+	sgx_status_t ms_retval;
+	sgx_ra_context_t ms_context;
+	uint8_t* ms_message;
+	size_t ms_message_size;
+	uint8_t* ms_mac;
+	size_t ms_mac_size;
+} ms_ecall_verify_att_result_mac_t;
+
+typedef struct ms_ecall_put_secrets_t {
+	sgx_status_t ms_retval;
+	sgx_ra_context_t ms_context;
+	uint8_t* ms_p_secret;
+	uint32_t ms_secret_size;
+	uint8_t* ms_gcm_mac;
+} ms_ecall_put_secrets_t;
+
 typedef struct ms_sgx_ra_get_ga_t {
 	sgx_status_t ms_retval;
 	sgx_ra_context_t ms_context;
@@ -220,17 +237,30 @@ sgx_status_t ecall_close_ra(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_ra_c
 	return status;
 }
 
-sgx_status_t ecall_verify_att_result_mac(sgx_enclave_id_t eid)
+sgx_status_t ecall_verify_att_result_mac(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_ra_context_t context, uint8_t* message, size_t message_size, uint8_t* mac, size_t mac_size)
 {
 	sgx_status_t status;
-	status = sgx_ecall(eid, 2, &ocall_table_demo_enclave, NULL);
+	ms_ecall_verify_att_result_mac_t ms;
+	ms.ms_context = context;
+	ms.ms_message = message;
+	ms.ms_message_size = message_size;
+	ms.ms_mac = mac;
+	ms.ms_mac_size = mac_size;
+	status = sgx_ecall(eid, 2, &ocall_table_demo_enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
 
-sgx_status_t ecall_put_secrets(sgx_enclave_id_t eid)
+sgx_status_t ecall_put_secrets(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_ra_context_t context, uint8_t* p_secret, uint32_t secret_size, uint8_t* gcm_mac)
 {
 	sgx_status_t status;
-	status = sgx_ecall(eid, 3, &ocall_table_demo_enclave, NULL);
+	ms_ecall_put_secrets_t ms;
+	ms.ms_context = context;
+	ms.ms_p_secret = p_secret;
+	ms.ms_secret_size = secret_size;
+	ms.ms_gcm_mac = gcm_mac;
+	status = sgx_ecall(eid, 3, &ocall_table_demo_enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
 

@@ -28,6 +28,23 @@ typedef struct ms_ecall_close_ra_t {
 	sgx_ra_context_t ms_context;
 } ms_ecall_close_ra_t;
 
+typedef struct ms_ecall_verify_att_result_mac_t {
+	sgx_status_t ms_retval;
+	sgx_ra_context_t ms_context;
+	uint8_t* ms_message;
+	size_t ms_message_size;
+	uint8_t* ms_mac;
+	size_t ms_mac_size;
+} ms_ecall_verify_att_result_mac_t;
+
+typedef struct ms_ecall_put_secrets_t {
+	sgx_status_t ms_retval;
+	sgx_ra_context_t ms_context;
+	uint8_t* ms_p_secret;
+	uint32_t ms_secret_size;
+	uint8_t* ms_gcm_mac;
+} ms_ecall_put_secrets_t;
+
 typedef struct ms_sgx_ra_get_ga_t {
 	sgx_status_t ms_retval;
 	sgx_ra_context_t ms_context;
@@ -161,17 +178,92 @@ static sgx_status_t SGX_CDECL sgx_ecall_close_ra(void* pms)
 
 static sgx_status_t SGX_CDECL sgx_ecall_verify_att_result_mac(void* pms)
 {
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_verify_att_result_mac_t));
+	ms_ecall_verify_att_result_mac_t* ms = SGX_CAST(ms_ecall_verify_att_result_mac_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
-	if (pms != NULL) return SGX_ERROR_INVALID_PARAMETER;
-	ecall_verify_att_result_mac();
+	uint8_t* _tmp_message = ms->ms_message;
+	size_t _tmp_message_size = ms->ms_message_size;
+	size_t _len_message = _tmp_message_size;
+	uint8_t* _in_message = NULL;
+	uint8_t* _tmp_mac = ms->ms_mac;
+	size_t _tmp_mac_size = ms->ms_mac_size;
+	size_t _len_mac = _tmp_mac_size;
+	uint8_t* _in_mac = NULL;
+
+	CHECK_UNIQUE_POINTER(_tmp_message, _len_message);
+	CHECK_UNIQUE_POINTER(_tmp_mac, _len_mac);
+
+	if (_tmp_message != NULL && _len_message != 0) {
+		_in_message = (uint8_t*)malloc(_len_message);
+		if (_in_message == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		memcpy(_in_message, _tmp_message, _len_message);
+	}
+	if (_tmp_mac != NULL && _len_mac != 0) {
+		_in_mac = (uint8_t*)malloc(_len_mac);
+		if (_in_mac == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		memcpy(_in_mac, _tmp_mac, _len_mac);
+	}
+	ms->ms_retval = ecall_verify_att_result_mac(ms->ms_context, _in_message, _tmp_message_size, _in_mac, _tmp_mac_size);
+err:
+	if (_in_message) free(_in_message);
+	if (_in_mac) free(_in_mac);
+
 	return status;
 }
 
 static sgx_status_t SGX_CDECL sgx_ecall_put_secrets(void* pms)
 {
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_put_secrets_t));
+	ms_ecall_put_secrets_t* ms = SGX_CAST(ms_ecall_put_secrets_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
-	if (pms != NULL) return SGX_ERROR_INVALID_PARAMETER;
-	ecall_put_secrets();
+	uint8_t* _tmp_p_secret = ms->ms_p_secret;
+	uint32_t _tmp_secret_size = ms->ms_secret_size;
+	size_t _len_p_secret = _tmp_secret_size;
+	uint8_t* _in_p_secret = NULL;
+	uint8_t* _tmp_gcm_mac = ms->ms_gcm_mac;
+	size_t _len_gcm_mac = 16 * sizeof(*_tmp_gcm_mac);
+	uint8_t* _in_gcm_mac = NULL;
+
+	if (sizeof(*_tmp_gcm_mac) != 0 &&
+		16 > (SIZE_MAX / sizeof(*_tmp_gcm_mac))) {
+		status = SGX_ERROR_INVALID_PARAMETER;
+		goto err;
+	}
+
+	CHECK_UNIQUE_POINTER(_tmp_p_secret, _len_p_secret);
+	CHECK_UNIQUE_POINTER(_tmp_gcm_mac, _len_gcm_mac);
+
+	if (_tmp_p_secret != NULL && _len_p_secret != 0) {
+		_in_p_secret = (uint8_t*)malloc(_len_p_secret);
+		if (_in_p_secret == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		memcpy(_in_p_secret, _tmp_p_secret, _len_p_secret);
+	}
+	if (_tmp_gcm_mac != NULL && _len_gcm_mac != 0) {
+		_in_gcm_mac = (uint8_t*)malloc(_len_gcm_mac);
+		if (_in_gcm_mac == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		memcpy(_in_gcm_mac, _tmp_gcm_mac, _len_gcm_mac);
+	}
+	ms->ms_retval = ecall_put_secrets(ms->ms_context, _in_p_secret, _tmp_secret_size, _in_gcm_mac);
+err:
+	if (_in_p_secret) free(_in_p_secret);
+	if (_in_gcm_mac) free(_in_gcm_mac);
+
 	return status;
 }
 

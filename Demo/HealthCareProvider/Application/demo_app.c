@@ -2,7 +2,6 @@
   Needed for defining integer range, eg. INT_MAX
 */
 #include <limits.h>
-#include <memory.h>
 
 /*
   Needed for untrusted enclave ocall interface
@@ -18,6 +17,11 @@
   Needed to perform some utility functions
 */
 #include "utils.h"
+
+/*
+  Needed for data structures related to attestation_result
+*/
+#include "remote_attestation_result.h"
 
 /*
   Needed to create enclave and do ecall
@@ -316,11 +320,13 @@ int SGX_CDECL main(int argc, char *argv[]){
     if(VERIFICATION_INDEX_IS_VALID()){
 
       // memcpy_s(p_msg1_full->body, p_msg1_full->size, msg1_samples[GET_VERIFICATION_ARRAY_INDEX()], p_msg1_full->size);
-      //
-      // fprintf(OUTPUT, "\nInstead of using the recently generated MSG1, "
-      //                 "we will use the following precomputed MSG1 -\n");
-      //
-      // PRINT_BYTE_ARRAY(OUTPUT, p_msg1_full->body, p_msg1_full->size);
+
+      memcpy(p_msg1_full->body, msg1_samples[GET_VERIFICATION_ARRAY_INDEX()], p_msg1_full->size);
+
+      fprintf(OUTPUT, "\nInstead of using the recently generated MSG1, "
+                      "we will use the following precomputed MSG1 -\n");
+
+      PRINT_BYTE_ARRAY(OUTPUT, p_msg1_full->body, p_msg1_full->size);
 
     }
 
@@ -336,28 +342,30 @@ int SGX_CDECL main(int argc, char *argv[]){
       fprintf(OUTPUT, "\nError, ra_network_send_receive for msg1 failed [%s].", __FUNCTION__);
 
       if(VERIFICATION_INDEX_IS_VALID()){
-        // fprintf(OUTPUT, "\nBecause we are in verification mode we will ignore this error.\n");
-        // fprintf(OUTPUT, "\nInstead, we will pretend we received the following MSG2 - \n");
-        //
-        // SAFE_FREE(p_msg2_full);
-        // ra_samp_response_header_t* precomputed_msg2 =
-        //     (ra_samp_response_header_t*)msg2_samples[
-        //         GET_VERIFICATION_ARRAY_INDEX()];
-        // const size_t msg2_full_size = sizeof(ra_samp_response_header_t)
-        //                               +  precomputed_msg2->size;
-        // p_msg2_full =
-        //     (ra_samp_response_header_t*)malloc(msg2_full_size);
-        // if(NULL == p_msg2_full)
-        // {
-        //     ret = -1;
-        //     goto CLEANUP;
-        // }
+        fprintf(OUTPUT, "\nBecause we are in verification mode we will ignore this error.\n");
+        fprintf(OUTPUT, "\nInstead, we will pretend we received the following MSG2 - \n");
+
+        SAFE_FREE(p_msg2_full);
+        ra_samp_response_header_t* precomputed_msg2 =
+            (ra_samp_response_header_t*)msg2_samples[
+                GET_VERIFICATION_ARRAY_INDEX()];
+        const size_t msg2_full_size = sizeof(ra_samp_response_header_t)
+                                      +  precomputed_msg2->size;
+        p_msg2_full =
+            (ra_samp_response_header_t*)malloc(msg2_full_size);
+        if(NULL == p_msg2_full)
+        {
+            ret = -1;
+            goto CLEANUP;
+        }
         // memcpy_s(p_msg2_full, msg2_full_size, precomputed_msg2,
         //          msg2_full_size);
-        //
-        // PRINT_BYTE_ARRAY(OUTPUT, p_msg2_full,
-        //                  sizeof(ra_samp_response_header_t)
-        //                  + p_msg2_full->size);
+        memcpy(p_msg2_full, precomputed_msg2,
+                 msg2_full_size);
+
+        PRINT_BYTE_ARRAY(OUTPUT, p_msg2_full,
+                         sizeof(ra_samp_response_header_t)
+                         + p_msg2_full->size);
       }else{
         goto CLEANUP;
       }
@@ -414,19 +422,20 @@ int SGX_CDECL main(int argc, char *argv[]){
     uint32_t msg3_size = 0;
     if( VERIFICATION_INDEX_IS_VALID())
     {
-      // // We cannot generate a valid MSG3 using the precomputed messages
-      // // we have been using. We will use the precomputed msg3 instead.
-      // msg3_size = MSG3_BODY_SIZE;
-      // p_msg3 = (sgx_ra_msg3_t*)malloc(msg3_size);
-      // if(NULL == p_msg3)
-      // {
-      //     ret = -1;
-      //     goto CLEANUP;
-      // }
+      // We cannot generate a valid MSG3 using the precomputed messages
+      // we have been using. We will use the precomputed msg3 instead.
+      msg3_size = MSG3_BODY_SIZE;
+      p_msg3 = (sgx_ra_msg3_t*)malloc(msg3_size);
+      if(NULL == p_msg3)
+      {
+          ret = -1;
+          goto CLEANUP;
+      }
       // memcpy_s(p_msg3, msg3_size,
       //          msg3_samples[GET_VERIFICATION_ARRAY_INDEX()], msg3_size);
-      // fprintf(OUTPUT, "\nBecause MSG1 was a precomputed value, the MSG3 "
-      //                 "we use will also be. PRECOMPUTED MSG3 - \n");
+      memcpy(p_msg3, msg3_samples[GET_VERIFICATION_ARRAY_INDEX()], msg3_size);
+      fprintf(OUTPUT, "\nBecause MSG1 was a precomputed value, the MSG3 "
+                      "we use will also be. PRECOMPUTED MSG3 - \n");
     }else{
       busy_retry_time = 2;
       // The demo_app now calls uKE sgx_ra_proc_msg2,
@@ -461,28 +470,122 @@ int SGX_CDECL main(int argc, char *argv[]){
 
     PRINT_BYTE_ARRAY(OUTPUT, p_msg3, msg3_size);
 
-    // p_msg3_full = (ra_samp_request_header_t*)malloc(
-    //                sizeof(ra_samp_request_header_t) + msg3_size);
-    // if(NULL == p_msg3_full)
-    // {
-    //   ret = -1;
-    //   goto CLEANUP;
-    // }
-    // p_msg3_full->type = TYPE_RA_MSG3;
-    // p_msg3_full->size = msg3_size;
-    // if(memcpy_s(p_msg3_full->body, msg3_size, p_msg3, msg3_size)){
-    //   fprintf(OUTPUT,"\nError: INTERNAL ERROR - memcpy failed in [%s].", __FUNCTION__);
-    //   ret = -1;
-    //   goto CLEANUP;
-    // }
+    p_msg3_full = (ra_samp_request_header_t*)malloc(
+                   sizeof(ra_samp_request_header_t) + msg3_size);
 
+    if(NULL == p_msg3_full)
+    {
+      ret = -1;
+      goto CLEANUP;
+    }
+    p_msg3_full->type = TYPE_RA_MSG3;
+    p_msg3_full->size = msg3_size;
+
+    memcpy((sgx_ra_msg3_t*)((uint8_t*)p_msg3_full + sizeof(ra_samp_request_header_t)), p_msg3, msg3_size);
+
+    fprintf(OUTPUT, "\nMSG3 package generated\n");
+
+    // if(memcpy_s(p_msg3_full->body, msg3_size, p_msg3, msg3_size))
+    // {
+    //   fprintf(OUTPUT,"\nError: INTERNAL ERROR - memcpy failed in [%s].",
+    //           __FUNCTION__);
+    //   ret = -1;
+    //   goto CLEANUP;
+    // }
   }
 
+  /*
+    result attestation msg
+  */
+  {
+    ret = ra_network_send_receive("http://demo_testing.cnsr.vt.edu/", p_msg3_full, &p_att_result_msg_full);
 
+    if(ret !=0 || !p_att_result_msg_full){
+      ret = -1;
+      fprintf(OUTPUT, "\nError, sending msg3 failed [%s].", __FUNCTION__);
+      goto CLEANUP;
+    }
 
-  printf("***Remote Attestation Functionality***\n");
-  ecall_verify_att_result_mac(global_eid);
-  ecall_put_secrets(global_eid);
+    sample_ra_att_result_msg_t *p_att_result_msg_body = (sample_ra_att_result_msg_t*)((uint8_t*)p_att_result_msg_full + sizeof(ra_samp_response_header_t));
+
+    if(TYPE_RA_ATT_RESULT != p_att_result_msg_full->type){
+      ret = -1;
+      fprintf(OUTPUT, "\nError. Sent MSG3 successfully, but the message received was NOT of type att_msg_result. Type = %d. [%s].", p_att_result_msg_full->type, __FUNCTION__);
+      goto CLEANUP;
+    }else{
+      fprintf(OUTPUT, "\nSent MSG3 successfully. Received an attestation result message back\n.");
+      if( VERIFICATION_INDEX_IS_VALID() ){
+        if(ATTESTATION_MSG_BODY_SIZE != p_att_result_msg_full->size || memcmp(p_att_result_msg_full->body, attestation_msg_samples[GET_VERIFICATION_ARRAY_INDEX()], p_att_result_msg_full->size) ){
+          fprintf(OUTPUT, "\nSent MSG3 successfully. Received an attestation result message back that did NOT match the expected value.\n");
+          fprintf(OUTPUT, "\nEXPECTED ATTESTATION RESULT -");
+          PRINT_BYTE_ARRAY(OUTPUT, attestation_msg_samples[GET_VERIFICATION_ARRAY_INDEX()], ATTESTATION_MSG_BODY_SIZE);
+        }
+      }
+    }
+
+    fprintf(OUTPUT, "\nATTESTATION RESULT RECEIVED - ");
+    PRINT_BYTE_ARRAY(OUTPUT, p_att_result_msg_full->body, p_att_result_msg_full->size);
+
+    if( VERIFICATION_INDEX_IS_VALID() )
+    {
+      fprintf(OUTPUT, "\nBecause we used precomputed values for the messages, the attestation result message will not pass further verification tests, so we will skip them.\n");
+      goto CLEANUP;
+    }
+
+  /*
+    verify the attestation result
+  */
+
+    // Check the MAC using MK on the attestation result message.
+    // The format of the attestation result message is demo_app specific.
+    // This is a simple form for demonstration. In a real product,
+    // the demo_app may want to communicate more information.
+    ret = ecall_verify_att_result_mac(global_eid, &status, context, (uint8_t*)&p_att_result_msg_body->platform_info_blob, sizeof(ias_platform_info_blob_t), (uint8_t*)&p_att_result_msg_body->mac, sizeof(sgx_mac_t));
+
+    if((SGX_SUCCESS != ret) || (SGX_SUCCESS != status)) {
+      ret = -1;
+      fprintf(OUTPUT, "\nError: INTEGRITY FAILED - attestation result message MK based cmac failed in [%s].", __FUNCTION__);
+      goto CLEANUP;
+    }
+
+    bool attestation_passed = true;
+    // Check the attestation result for pass or fail.
+    // Whether attestation passes or fails is a decision made by the ISV Server.
+    // When the ISV server decides to trust the enclave, then it will return success.
+    // When the ISV server decided to not trust the enclave, then it will return failure.
+    if(0 != p_att_result_msg_full->status[0] || 0 != p_att_result_msg_full->status[1]){
+      fprintf(OUTPUT, "\nError, attestation result message MK based cmac failed in [%s].", __FUNCTION__);
+      attestation_passed = false;
+    }
+
+    // The attestation result message should contain a field for the Platform
+    // Info Blob (PIB).  The PIB is returned by attestation server in the attestation report.
+    // It is not returned in all cases, but when it is, the ISV app
+    // should pass it to the blob analysis API called sgx_report_attestation_status()
+    // along with the trust decision from the ISV server.
+    // The ISV application will take action based on the update_info.
+    // returned in update_info by the API.
+    // This call is stubbed out for the sample.
+    //
+    // sgx_update_info_bit_t update_info;
+    // ret = sgx_report_attestation_status(
+    //     &p_att_result_msg_body->platform_info_blob,
+    //     attestation_passed ? 0 : 1, &update_info);
+
+    // Get the shared secret sent by the server using SK (if attestation
+    // passed)
+    if(attestation_passed){
+      ret = ecall_put_secrets(global_eid, &status,
+                            context, p_att_result_msg_body->secret.payload, p_att_result_msg_body->secret.payload_size, p_att_result_msg_body->secret.payload_tag);
+      if((SGX_SUCCESS != ret) || (SGX_SUCCESS != status)){
+        fprintf(OUTPUT, "\nError, attestation result message secret using SK based AESGCM failed in [%s]. ret = 0x%0x. status = 0x%0x", __FUNCTION__, ret, status);
+        goto CLEANUP;
+      }
+    }
+    fprintf(OUTPUT, "\nSecret successfully received from server.");
+    fprintf(OUTPUT, "\nRemote attestation success!");
+  }
+
 
   printf("\n***Sealing Secrets Functionality***\n");
   ecall_create_sealed_policy(global_eid);
@@ -496,6 +599,21 @@ int SGX_CDECL main(int argc, char *argv[]){
   ecall_perform_fun_2(global_eid);
 
 CLEANUP:
+
+  if(INT_MAX != context){
+    int ret_save = ret;
+    ret = ecall_close_ra(global_eid, &status, context);
+    if(SGX_SUCCESS != ret || status){
+      ret = -1;
+      fprintf(OUTPUT, "\nError, call ecall_close_ra fail() [%s].", __FUNCTION__);
+    }
+    else{
+      // enclave_ra_close was successful, let's restore the value that
+      // led us to this point in the code.
+      ret = ret_save;
+    }
+    fprintf(OUTPUT, "\nCall ecall_close_ra() success.");
+  }
 
   sgx_destroy_enclave(global_eid);
 
