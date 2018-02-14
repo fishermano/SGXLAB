@@ -144,6 +144,10 @@ void ocall_print(const char* str){
   printf("%s\n", str);
 }
 
+void ocall_print_int(int num){
+  printf("The number is: %d\n", num);
+}
+
 /*
   entry of the application
 */
@@ -261,8 +265,7 @@ int SGX_CDECL main(int argc, char *argv[]){
        */
       if(initialize_enclave() < 0){
         ret = -1;
-        fprintf(OUTPUT, "\nError, enclave initialization Failed [%s].",
-                __FUNCTION__);
+        fprintf(OUTPUT, "\nError, enclave initialization Failed [%s].", __FUNCTION__);
         goto CLEANUP;
       }
 
@@ -586,18 +589,6 @@ int SGX_CDECL main(int argc, char *argv[]){
     fprintf(OUTPUT, "\nRemote attestation success!");
   }
 
-
-  printf("\n***Sealing Secrets Functionality***\n");
-  ecall_create_sealed_policy(global_eid);
-  ecall_perform_sealed_policy(global_eid);
-
-  printf("\n***Heartbeat Functionality***\n");
-  ecall_start_heartbeat(global_eid);
-
-  printf("\n***Functions Functionality***\n");
-  ecall_perform_fun_1(global_eid);
-  ecall_perform_fun_2(global_eid);
-
 CLEANUP:
 
   if(INT_MAX != context){
@@ -615,6 +606,69 @@ CLEANUP:
     fprintf(OUTPUT, "\nCall ecall_close_ra() success.");
   }
 
+  fprintf(OUTPUT, "\n\n\n***Starting Sealing Secrets Functionality***\n\n");
+
+  /*
+    define seal log parameters
+  */
+  /* equal to sgx_calc_sealed_data_size(0,sizeof(replay_protected_pay_load))) in ss.c
+  */
+#define SEALED_REPLAY_PROTECTED_PAY_LOAD_SIZE 624
+  uint32_t sealed_activity_log_length = SEALED_REPLAY_PROTECTED_PAY_LOAD_SIZE;
+  uint8_t  sealed_activity_log[sealed_activity_log_length];
+
+  sgx_ps_cap_t ps_cap;
+  memset(&ps_cap, 0, sizeof(sgx_ps_cap_t));
+  ret = sgx_get_ps_cap(&ps_cap);
+  if(SGX_SUCCESS != ret){
+    fprintf(OUTPUT, "\nCannot get platform service capability failed in [%s], error code = 0x%0x\n", __FUNCTION__, ret);
+    ret = -1;
+    goto FINAL;
+  }
+  if(!SGX_IS_MONOTONIC_COUNTER_AVAILABLE(ps_cap)){
+    fprintf(OUTPUT, "\nMonotonic counter is not supported failed in [%s], error code = 0x%0x\n", __FUNCTION__, SGX_ERROR_SERVICE_UNAVAILABLE);
+    ret = -1;
+    goto FINAL;
+  }
+
+  ret = ecall_create_sealed_policy(global_eid, &status, (uint8_t *)sealed_activity_log, sealed_activity_log_length);
+  if(SGX_SUCCESS != ret){
+    fprintf(OUTPUT, "\nCall ecall_create_sealed_policy failed in [%s], error code = 0x%0x\n", __FUNCTION__, ret);
+    ret = -1;
+    goto FINAL;
+  }
+  if(SGX_SUCCESS != status){
+    fprintf(OUTPUT, "\nCannot create_sealed_policy failed in [%s], error code = 0x%0x\n", __FUNCTION__, status);
+    ret = -1;
+    goto FINAL;
+  }
+
+  fprintf(OUTPUT, "\nSecrets sealed in sealed_activity_log successfully\n");
+
+  ret = ecall_perform_sealed_policy(global_eid, &status, (uint8_t *)sealed_activity_log, sealed_activity_log_length);
+  if(SGX_SUCCESS != ret){
+    fprintf(OUTPUT, "\nCall ecall_perform_sealed_policy failed in [%s], error code = 0x%0x\n", __FUNCTION__, ret);
+    ret = -1;
+    goto FINAL;
+  }
+  if(SGX_SUCCESS != status){
+    fprintf(OUTPUT, "\nCannot perform_sealed_policy failed in [%s], error code = 0x%0x\n", __FUNCTION__, status);
+    ret = -1;
+    goto FINAL;
+  }
+
+  fprintf(OUTPUT, "\nSecrets sealed recovered from sealed_activity_log successfully\n");
+
+  printf("\n***Heartbeat Functionality***\n");
+  ecall_start_heartbeat(global_eid);
+
+  printf("\n***Functions Functionality***\n");
+  ecall_perform_fun_1(global_eid);
+  ecall_perform_fun_2(global_eid);
+
+
+FINAL:
+
   sgx_destroy_enclave(global_eid);
 
   printf("\n\nInfo: Enclave Successfully Retrurned. \n");
@@ -622,5 +676,4 @@ CLEANUP:
   printf("Enter a character before exit ... \n");
   getchar();
   return ret;
-
 }

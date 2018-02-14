@@ -36,7 +36,6 @@ static const sgx_ec256_public_t g_sp_pub_key = {
 // 0x01,0x02,0x03,0x04,0x0x5,0x0x6,0x0x7
 uint8_t g_secret[8] = {0};
 
-
 #ifdef SUPPLIED_KEY_DERIVATION
 
 #pragma message ("Supplied key derivation function is used.")

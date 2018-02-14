@@ -53,9 +53,25 @@ typedef struct ms_sgx_ra_get_msg3_trusted_t {
 	uint32_t ms_msg3_size;
 } ms_sgx_ra_get_msg3_trusted_t;
 
+typedef struct ms_ecall_create_sealed_policy_t {
+	sgx_status_t ms_retval;
+	uint8_t* ms_sealed_log;
+	uint32_t ms_sealed_log_size;
+} ms_ecall_create_sealed_policy_t;
+
+typedef struct ms_ecall_perform_sealed_policy_t {
+	sgx_status_t ms_retval;
+	uint8_t* ms_sealed_log;
+	uint32_t ms_sealed_log_size;
+} ms_ecall_perform_sealed_policy_t;
+
 typedef struct ms_ocall_print_t {
 	char* ms_str;
 } ms_ocall_print_t;
+
+typedef struct ms_ocall_print_int_t {
+	int ms_num;
+} ms_ocall_print_int_t;
 
 typedef struct ms_create_session_ocall_t {
 	sgx_status_t ms_retval;
@@ -122,6 +138,14 @@ static sgx_status_t SGX_CDECL demo_enclave_ocall_print(void* pms)
 {
 	ms_ocall_print_t* ms = SGX_CAST(ms_ocall_print_t*, pms);
 	ocall_print((const char*)ms->ms_str);
+
+	return SGX_SUCCESS;
+}
+
+static sgx_status_t SGX_CDECL demo_enclave_ocall_print_int(void* pms)
+{
+	ms_ocall_print_int_t* ms = SGX_CAST(ms_ocall_print_int_t*, pms);
+	ocall_print_int(ms->ms_num);
 
 	return SGX_SUCCESS;
 }
@@ -200,11 +224,12 @@ static sgx_status_t SGX_CDECL demo_enclave_sgx_thread_set_multiple_untrusted_eve
 
 static const struct {
 	size_t nr_ocall;
-	void * table[10];
+	void * table[11];
 } ocall_table_demo_enclave = {
-	10,
+	11,
 	{
 		(void*)demo_enclave_ocall_print,
+		(void*)demo_enclave_ocall_print_int,
 		(void*)demo_enclave_create_session_ocall,
 		(void*)demo_enclave_exchange_report_ocall,
 		(void*)demo_enclave_close_session_ocall,
@@ -303,17 +328,25 @@ sgx_status_t sgx_ra_get_msg3_trusted(sgx_enclave_id_t eid, sgx_status_t* retval,
 	return status;
 }
 
-sgx_status_t ecall_create_sealed_policy(sgx_enclave_id_t eid)
+sgx_status_t ecall_create_sealed_policy(sgx_enclave_id_t eid, sgx_status_t* retval, uint8_t* sealed_log, uint32_t sealed_log_size)
 {
 	sgx_status_t status;
-	status = sgx_ecall(eid, 7, &ocall_table_demo_enclave, NULL);
+	ms_ecall_create_sealed_policy_t ms;
+	ms.ms_sealed_log = sealed_log;
+	ms.ms_sealed_log_size = sealed_log_size;
+	status = sgx_ecall(eid, 7, &ocall_table_demo_enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
 
-sgx_status_t ecall_perform_sealed_policy(sgx_enclave_id_t eid)
+sgx_status_t ecall_perform_sealed_policy(sgx_enclave_id_t eid, sgx_status_t* retval, const uint8_t* sealed_log, uint32_t sealed_log_size)
 {
 	sgx_status_t status;
-	status = sgx_ecall(eid, 8, &ocall_table_demo_enclave, NULL);
+	ms_ecall_perform_sealed_policy_t ms;
+	ms.ms_sealed_log = (uint8_t*)sealed_log;
+	ms.ms_sealed_log_size = sealed_log_size;
+	status = sgx_ecall(eid, 8, &ocall_table_demo_enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
 

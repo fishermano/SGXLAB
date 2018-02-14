@@ -25,13 +25,14 @@ sgx_status_t ecall_put_secrets(sgx_ra_context_t context, uint8_t* p_secret, uint
 sgx_status_t sgx_ra_get_ga(sgx_ra_context_t context, sgx_ec256_public_t* g_a);
 sgx_status_t sgx_ra_proc_msg2_trusted(sgx_ra_context_t context, const sgx_ra_msg2_t* p_msg2, const sgx_target_info_t* p_qe_target, sgx_report_t* p_report, sgx_quote_nonce_t* p_nonce);
 sgx_status_t sgx_ra_get_msg3_trusted(sgx_ra_context_t context, uint32_t quote_size, sgx_report_t* qe_report, sgx_ra_msg3_t* p_msg3, uint32_t msg3_size);
-void ecall_create_sealed_policy();
-void ecall_perform_sealed_policy();
+sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log_size);
+sgx_status_t ecall_perform_sealed_policy(const uint8_t* sealed_log, uint32_t sealed_log_size);
 void ecall_start_heartbeat();
 void ecall_perform_fun_1();
 void ecall_perform_fun_2();
 
 sgx_status_t SGX_CDECL ocall_print(const char* str);
+sgx_status_t SGX_CDECL ocall_print_int(int num);
 sgx_status_t SGX_CDECL create_session_ocall(sgx_status_t* retval, uint32_t* sid, uint8_t* dh_msg1, uint32_t dh_msg1_size, uint32_t timeout);
 sgx_status_t SGX_CDECL exchange_report_ocall(sgx_status_t* retval, uint32_t sid, uint8_t* dh_msg2, uint32_t dh_msg2_size, uint8_t* dh_msg3, uint32_t dh_msg3_size, uint32_t timeout);
 sgx_status_t SGX_CDECL close_session_ocall(sgx_status_t* retval, uint32_t sid, uint32_t timeout);
