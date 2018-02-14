@@ -84,7 +84,7 @@ else
 endif
 Crypto_Library_Name := sgx_tcrypto
 
-Enclave_C_Files := $(wildcard Enclave/Functions/*.c) $(wildcard Enclave/Heartbeat/*.c) $(wildcard Enclave/RemoteAttestation/*.c) $(wildcard Enclave/SealSecrets/*.c)
+Enclave_C_Files := $(wildcard Enclave/*.c) $(wildcard Enclave/Functions/*.c) $(wildcard Enclave/Heartbeat/*.c) $(wildcard Enclave/RemoteAttestation/*.c) $(wildcard Enclave/SealSecrets/*.c)
 Enclave_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx
 
 CC_BELOW_4_9 := $(shell expr "`$(CC) -dumpversion`" \< "4.9")

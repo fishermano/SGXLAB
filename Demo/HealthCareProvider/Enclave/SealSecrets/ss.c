@@ -1,4 +1,5 @@
 #include "../demo_enclave_t.h"
+#include "../demo_enclave.h"
 
 #include "sgx_trts.h"
 #include "sgx_tseal.h"
@@ -25,7 +26,8 @@ typedef struct _replay_protected_pay_load
     activity_log log;
 }replay_protected_pay_load;
 
-extern uint8_t g_secret[8];
+extern uint8_t secret_share_key[8];
+extern uint8_t device_keys[DEVICE_KEY_MAX_NUM][8];
 
 // Used to store the secret recovered from the outside. The
 // size is forced to be 8 bytes. Expected value is
@@ -170,8 +172,8 @@ sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log
     //     break;
     // }
 
-    memcpy(data2seal.secret, g_secret, sizeof(g_secret));
-    data2seal.secret_size = sizeof(g_secret);
+    memcpy(data2seal.secret, secret_share_key, sizeof(secret_share_key));
+    data2seal.secret_size = sizeof(secret_share_key);
 
     data2seal.log.release_version = 0;
     /* the secret can be updated for 5 times */

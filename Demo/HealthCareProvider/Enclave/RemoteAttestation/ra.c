@@ -34,7 +34,7 @@ static const sgx_ec256_public_t g_sp_pub_key = {
 // Used to store the secret passed by the SP in the sample code. The
 // size is forced to be 8 bytes. Expected value is
 // 0x01,0x02,0x03,0x04,0x0x5,0x0x6,0x0x7
-uint8_t g_secret[8] = {0};
+extern uint8_t secret_share_key[8];
 
 #ifdef SUPPLIED_KEY_DERIVATION
 
@@ -325,12 +325,12 @@ sgx_status_t ecall_put_secrets(sgx_ra_context_t context, uint8_t *p_secret, uint
     }
 
     uint8_t aes_gcm_iv[12] = {0};
-    ret = sgx_rijndael128GCM_decrypt(&sk_key, p_secret, secret_size, &g_secret[0], &aes_gcm_iv[0], 12, NULL, 0, (const sgx_aes_gcm_128bit_tag_t *)(p_gcm_mac));
+    ret = sgx_rijndael128GCM_decrypt(&sk_key, p_secret, secret_size, &secret_share_key[0], &aes_gcm_iv[0], 12, NULL, 0, (const sgx_aes_gcm_128bit_tag_t *)(p_gcm_mac));
 
     uint32_t i;
     bool secret_match = true;
     for(i=0;i<secret_size;i++){
-        if(g_secret[i] != i){
+        if(secret_share_key[i] != i){
           secret_match = false;
         }
     }

@@ -1,0 +1,2 @@
+
+#define DEVICE_KEY_MAX_NUM 20
