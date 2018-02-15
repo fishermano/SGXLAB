@@ -17,6 +17,7 @@
   Needed to perform some utility functions
 */
 #include "utils.h"
+#include "ThirdPartyLibrary/key_management.h"
 
 /*
   Needed for data structures related to attestation_result
@@ -37,6 +38,7 @@
   Needed to query extended epid group id.
 */
 #include "sgx_uae_service.h"
+
 
 #ifndef SAFE_FREE
 #define SAFE_FREE(ptr) {if (NULL != (ptr)) {free(ptr); (ptr) = NULL;}}
@@ -169,6 +171,11 @@ int SGX_CDECL main(int argc, char *argv[]){
   ra_samp_request_header_t *p_msg3_full = NULL;
   sgx_ra_msg3_t *p_msg3 = NULL;
   ra_samp_response_header_t *p_att_result_msg_full = NULL;
+
+  kd_samp_package_header_t *key_req = NULL;
+  kd_samp_package_header_t *key_resp = NULL;
+  hcp_samp_certificate_t * hcp = NULL;
+  sp_samp_key_set_t *device_keys = NULL;
 
   /*
     define retry parameters
@@ -658,6 +665,37 @@ CLEANUP:
   }
 
   fprintf(OUTPUT, "\nSecrets sealed recovered from sealed_activity_log successfully\n");
+
+  hcp = (hcp_samp_certificate_t *)malloc(sizeof(hcp_samp_certificate_t));
+  memset(hcp, 0, sizeof(hcp_samp_certificate_t));
+  hcp->id = 1;
+  hcp->sig = {0};
+
+  key_req = (kd_samp_package_header_t*)malloc(
+                 sizeof(kd_samp_package_header_t) + sizeof(hcp_samp_certificate_t));
+
+  if(NULL == key_req)
+  {
+    ret = -1;
+  }
+  key_req->type = TYPE_KEY_REQUEST;
+  key_req->size = sizeof(hcp_samp_certificate_t);
+
+  memcpy((hcp_samp_certificate_t*)((uint8_t*)key_req + sizeof(kd_samp_package_header_t)), hcp, sizeof(hcp_samp_certificate_t));
+
+  fprintf(OUTPUT, "\nHealth Care Provider key request package generated\n");
+
+  ret = kq_network_send_receive("http://demo_testing.cnsr.vt.edu/", key_req, &key_resp);
+
+  if(ret !=0 || !key_resp){
+    ret = -1;
+    fprintf(OUTPUT, "\nError, sending key request failed [%s].", __FUNCTION__);
+  }
+
+  device_keys = (sp_samp_key_set_t*)((uint8_t*)key_resp + sizeof(kd_samp_package_header_t));
+
+  fprintf(OUTPUT, "\nkeys received: %d\n", device_keys->key_num);
+
 
   printf("\n***Heartbeat Functionality***\n");
   ecall_start_heartbeat(global_eid);

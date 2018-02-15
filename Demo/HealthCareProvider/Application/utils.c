@@ -4,6 +4,7 @@
 #include "remote_attestation_result.h"
 
 #include "ThirdPartyLibrary/remote_attestation.h"
+#include "ThirdPartyLibrary/key_management.h"
 
 // Some utility functions to output some of the data structures passed between
 // the app and the trusted broker.
@@ -150,6 +151,31 @@ int ra_network_send_receive(const char *server_url, const ra_samp_request_header
       ret = -1;
       fprintf(stderr, "\nError, unknown remote attestation message type. Type = %d [%s].", p_req->type, __FUNCTION__);
       break;
+  }
+
+  return ret;
+}
+
+int kq_network_send_receive(const char *server_url, const kd_samp_package_header_t *p_req, kd_samp_package_header_t **p_resp){
+  int ret = 0;
+  kd_samp_package_header_t *p_resp_msg;
+
+  if((NULL == server_url) || (NULL == p_req) || (NULL == p_resp)){
+    ret = -1;
+    return ret;
+  }
+
+  ret = sp_km_proc_key_req((const hcp_samp_certificate_t*)((uint8_t*)p_req
+      + sizeof(kd_samp_package_header_t)), &p_resp_msg);
+
+  if(0 != ret)
+  {
+      fprintf(stderr, "\nError, call sp_km_proc_key_req fail [%s].",
+          __FUNCTION__);
+  }
+  else
+  {
+      *p_resp = p_resp_msg;
   }
 
   return ret;
