@@ -5,6 +5,7 @@
 
 #include "ThirdPartyLibrary/remote_attestation.h"
 #include "ThirdPartyLibrary/key_management.h"
+#include "ThirdPartyLibrary/data_upload.h"
 
 // Some utility functions to output some of the data structures passed between
 // the app and the trusted broker.
@@ -179,4 +180,8 @@ int kq_network_send_receive(const char *server_url, const kd_samp_package_header
   }
 
   return ret;
+}
+
+int dr_network_send_receive(const char *server_url, const uint8_t dev_id, const uint8_t offset, du_samp_package_header_t **p_resp){
+
 }

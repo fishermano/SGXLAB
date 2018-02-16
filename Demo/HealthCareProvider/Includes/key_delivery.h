@@ -1,3 +1,5 @@
+#ifndef _KEY_DELIVERY_H
+#define _KEY_DELIVERY_H
 
 #include <stdint.h>
 
@@ -14,3 +16,5 @@ typedef struct _kd_samp_package_header_t{
   uint8_t body[];
 }kd_samp_package_header_t;
 #pragma pack()
+
+#endif

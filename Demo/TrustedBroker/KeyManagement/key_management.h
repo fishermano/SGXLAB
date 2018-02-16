@@ -1,3 +1,5 @@
+#ifndef _KEY_MANAGEMENT_H
+#define _KEY_MANAGEMENT_H
 
 #include "key_delivery.h"
 #include "sample_libcrypto.h"
@@ -13,3 +15,5 @@ typedef struct sp_samp_key_set_t{
 }sp_samp_key_set_t;
 
 int sp_km_proc_key_req(const hcp_samp_certificate_t *request, kd_samp_package_header_t **response);
+
+#endif
