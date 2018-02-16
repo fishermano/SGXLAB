@@ -83,7 +83,6 @@ typedef struct ms_ecall_perform_sealed_policy_t {
 
 typedef struct ms_ecall_put_keys_t {
 	sgx_status_t ms_retval;
-	sgx_ra_context_t ms_context;
 	uint8_t* ms_p_secret;
 	uint32_t ms_secret_size;
 	uint8_t* ms_gcm_mac;
@@ -519,7 +518,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_put_keys(void* pms)
 
 		memcpy(_in_gcm_mac, _tmp_gcm_mac, _len_gcm_mac);
 	}
-	ms->ms_retval = ecall_put_keys(ms->ms_context, _in_p_secret, _tmp_secret_size, _in_gcm_mac);
+	ms->ms_retval = ecall_put_keys(_in_p_secret, _tmp_secret_size, _in_gcm_mac);
 err:
 	if (_in_p_secret) free(_in_p_secret);
 	if (_in_gcm_mac) free(_in_gcm_mac);

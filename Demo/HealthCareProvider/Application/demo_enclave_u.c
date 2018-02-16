@@ -67,7 +67,6 @@ typedef struct ms_ecall_perform_sealed_policy_t {
 
 typedef struct ms_ecall_put_keys_t {
 	sgx_status_t ms_retval;
-	sgx_ra_context_t ms_context;
 	uint8_t* ms_p_secret;
 	uint32_t ms_secret_size;
 	uint8_t* ms_gcm_mac;
@@ -358,11 +357,10 @@ sgx_status_t ecall_perform_sealed_policy(sgx_enclave_id_t eid, sgx_status_t* ret
 	return status;
 }
 
-sgx_status_t ecall_put_keys(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_ra_context_t context, uint8_t* p_secret, uint32_t secret_size, uint8_t* gcm_mac)
+sgx_status_t ecall_put_keys(sgx_enclave_id_t eid, sgx_status_t* retval, uint8_t* p_secret, uint32_t secret_size, uint8_t* gcm_mac)
 {
 	sgx_status_t status;
 	ms_ecall_put_keys_t ms;
-	ms.ms_context = context;
 	ms.ms_p_secret = p_secret;
 	ms.ms_secret_size = secret_size;
 	ms.ms_gcm_mac = gcm_mac;

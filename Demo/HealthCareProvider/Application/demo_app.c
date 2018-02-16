@@ -175,7 +175,7 @@ int SGX_CDECL main(int argc, char *argv[]){
   kd_samp_package_header_t *key_req = NULL;
   kd_samp_package_header_t *key_resp = NULL;
   hcp_samp_certificate_t * hcp = NULL;
-  sp_aes_gcm_data_t *encrypted_device_keys = NULL;
+  sp_aes_gcm_data_t *p_enc_dev_keys = NULL;
 
   /*
     define retry parameters
@@ -694,11 +694,13 @@ CLEANUP:
     fprintf(OUTPUT, "\nError, sending key request failed [%s].", __FUNCTION__);
   }
 
-  encrypted_device_keys = (sp_aes_gcm_data_t*)((uint8_t*)key_resp + sizeof(kd_samp_package_header_t));
+  p_enc_dev_keys = (sp_aes_gcm_data_t*)((uint8_t*)key_resp + sizeof(kd_samp_package_header_t));
 
-  
-
-  fprintf(OUTPUT, "\nkeys received: %d\n", encrypted_device_keys->payload_tag);
+  ret = ecall_put_keys(global_eid, &status, p_enc_dev_keys->payload, p_enc_dev_keys->payload_size, p_enc_dev_keys->payload_tag);
+  if((SGX_SUCCESS != ret) || (SGX_SUCCESS != status)){
+    fprintf(OUTPUT, "\nError, encrypted key set secret using secret_share_key based AESGCM failed in [%s]. ret = 0x%0x. status = 0x%0x", __FUNCTION__, ret, status);
+    goto FINAL;
+  }
 
 
   printf("\n***Heartbeat Functionality***\n");

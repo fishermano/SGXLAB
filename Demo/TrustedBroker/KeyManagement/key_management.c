@@ -44,7 +44,7 @@ int key_retrieve(uint8_t hcp_id, sp_samp_key_set_t **pp_key_set){
 int sp_km_proc_key_req(const hcp_samp_certificate_t *p_cert, kd_samp_package_header_t **response){
 
   kd_samp_package_header_t *p_resp = NULL;
-  sp_aes_gcm_data_t *encrypted_keys_massage = NULL;
+  sp_aes_gcm_data_t *p_encrypted_keys = NULL;
   sp_samp_key_set_t *p_key_set = NULL;
 
 
@@ -64,36 +64,50 @@ int sp_km_proc_key_req(const hcp_samp_certificate_t *p_cert, kd_samp_package_hea
     return -1;
   }
 
-  uint32_t key_size = p_key_set->key_num * sizeof(sample_aes_gcm_128bit_key_t);
-
-  p_resp = (kd_samp_package_header_t *)malloc(sizeof(kd_samp_package_header_t) + sizeof(sp_aes_gcm_data_t) + sizeof(sp_samp_key_set_t) + key_size);
-  if(!p_resp){
-    fprintf(stderr, "\nError, out of memory in [%s].", __FUNCTION__);
-    return -1;
+  fprintf(stdout, "\nkey number: %d \n", p_key_set->key_num);
+  for(uint8_t i =0; i<p_key_set->key_num; i++){
+    for(uint8_t j = 0; j<16; j++){
+      fprintf(stdout, "key %d: %d\n", i, p_key_set->keys[i][j]);
+    }
+    fprintf(stdout, "*********************\n\n");
   }
-  memset(p_resp, 0, sizeof(kd_samp_package_header_t) + sizeof(sp_aes_gcm_data_t) + sizeof(sp_samp_key_set_t) + key_size);
 
-  p_resp->type = TYPE_KEY_RESPONSE;
-  p_resp->size = sizeof(sp_aes_gcm_data_t) + sizeof(sp_samp_key_set_t) + key_size;
-
-  encrypted_keys_massage = (sp_aes_gcm_data_t *)p_resp->body;
+  uint32_t key_set_size = (p_key_set->key_num * sizeof(sample_aes_gcm_128bit_key_t)) + sizeof(sp_samp_key_set_t);
 
   uint8_t aes_gcm_iv[SAMPLE_SP_IV_SIZE] = {0};
-  encrypted_keys_massage->payload_size = sizeof(sp_samp_key_set_t) + key_size;
+  p_encrypted_keys = (sp_aes_gcm_data_t *)malloc(sizeof(sp_aes_gcm_data_t) + key_set_size);
+  memset(p_encrypted_keys, 0, sizeof(sp_aes_gcm_data_t) + key_set_size);
+  if(!p_encrypted_keys){
+    fprintf(stderr, "\nError, out of memory in [%s].\n", __FUNCTION__);
+    return -1;
+  }
   int ret = sample_rijndael128GCM_encrypt(&secret_share_key,
-              (const uint8_t *)p_key_set,
-              encrypted_keys_massage->payload_size,
-              encrypted_keys_massage->payload,
+              &p_key_set->key_num,
+              key_set_size,
+              p_encrypted_keys->payload,
               &aes_gcm_iv[0],
               SAMPLE_SP_IV_SIZE,
               NULL,
               0,
-              &encrypted_keys_massage->payload_tag);
-
-  if(ret){
-    *response = NULL;
+              &p_encrypted_keys->payload_tag);
+  if(SAMPLE_SUCCESS != ret){
+    fprintf(stderr, "\nError, data encryption in [%s].\n", __FUNCTION__);
     return -1;
   }
+
+  p_encrypted_keys->payload_size = key_set_size;
+
+  p_resp = (kd_samp_package_header_t *)malloc(sizeof(kd_samp_package_header_t) + sizeof(sp_aes_gcm_data_t) + key_set_size);
+  if(!p_resp){
+    fprintf(stderr, "\nError, out of memory in [%s].", __FUNCTION__);
+    return -1;
+  }
+  memset(p_resp, 0, sizeof(kd_samp_package_header_t) + sizeof(sp_aes_gcm_data_t) + key_set_size);
+
+  p_resp->type = TYPE_KEY_RESPONSE;
+  p_resp->size = sizeof(sp_aes_gcm_data_t) + key_set_size;
+
+  memcpy(p_resp->body, p_encrypted_keys, sizeof(sp_aes_gcm_data_t) + key_set_size);
 
   *response = p_resp;
 

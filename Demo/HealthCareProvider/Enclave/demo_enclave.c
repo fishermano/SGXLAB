@@ -3,6 +3,7 @@
 */
 
 #include <stdint.h>
+#include "string.h"
 
 #include "demo_enclave.h"
 
@@ -13,4 +14,4 @@ uint8_t secret_share_key[16] = {0};
 uint8_t u_secret_share_key[16] = {0};
 
 // device keys received from trusted broker
-key_set_t key_set = {0};
+key_set_t *p_key_set = NULL;
