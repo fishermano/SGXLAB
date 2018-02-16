@@ -175,7 +175,7 @@ int SGX_CDECL main(int argc, char *argv[]){
   kd_samp_package_header_t *key_req = NULL;
   kd_samp_package_header_t *key_resp = NULL;
   hcp_samp_certificate_t * hcp = NULL;
-  sp_samp_key_set_t *device_keys = NULL;
+  sp_aes_gcm_data_t *encrypted_device_keys = NULL;
 
   /*
     define retry parameters
@@ -584,6 +584,7 @@ int SGX_CDECL main(int argc, char *argv[]){
 
     // Get the shared secret sent by the server using SK (if attestation
     // passed)
+
     if(attestation_passed){
       ret = ecall_put_secrets(global_eid, &status,
                             context, p_att_result_msg_body->secret.payload, p_att_result_msg_body->secret.payload_size, p_att_result_msg_body->secret.payload_tag);
@@ -637,6 +638,7 @@ CLEANUP:
     ret = -1;
     goto FINAL;
   }
+
 
   ret = ecall_create_sealed_policy(global_eid, &status, (uint8_t *)sealed_activity_log, sealed_activity_log_length);
   if(SGX_SUCCESS != ret){
@@ -692,9 +694,11 @@ CLEANUP:
     fprintf(OUTPUT, "\nError, sending key request failed [%s].", __FUNCTION__);
   }
 
-  device_keys = (sp_samp_key_set_t*)((uint8_t*)key_resp + sizeof(kd_samp_package_header_t));
+  encrypted_device_keys = (sp_aes_gcm_data_t*)((uint8_t*)key_resp + sizeof(kd_samp_package_header_t));
 
-  fprintf(OUTPUT, "\nkeys received: %d\n", device_keys->key_num);
+  
+
+  fprintf(OUTPUT, "\nkeys received: %d\n", encrypted_device_keys->payload_tag);
 
 
   printf("\n***Heartbeat Functionality***\n");

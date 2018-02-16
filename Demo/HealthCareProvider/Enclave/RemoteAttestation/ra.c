@@ -34,7 +34,8 @@ static const sgx_ec256_public_t g_sp_pub_key = {
 // Used to store the secret passed by the SP in the sample code. The
 // size is forced to be 8 bytes. Expected value is
 // 0x01,0x02,0x03,0x04,0x0x5,0x0x6,0x0x7
-extern uint8_t secret_share_key[8];
+//extern uint8_t secret_share_key[8];
+extern uint8_t secret_share_key[16];
 
 #ifdef SUPPLIED_KEY_DERIVATION
 
@@ -314,7 +315,7 @@ sgx_status_t ecall_put_secrets(sgx_ra_context_t context, uint8_t *p_secret, uint
   sgx_ec_key_128bit_t sk_key;
 
   do{
-    if(secret_size != 8){
+    if(secret_size != 16){
       ret = SGX_ERROR_INVALID_PARAMETER;
       break;
     }
@@ -327,17 +328,17 @@ sgx_status_t ecall_put_secrets(sgx_ra_context_t context, uint8_t *p_secret, uint
     uint8_t aes_gcm_iv[12] = {0};
     ret = sgx_rijndael128GCM_decrypt(&sk_key, p_secret, secret_size, &secret_share_key[0], &aes_gcm_iv[0], 12, NULL, 0, (const sgx_aes_gcm_128bit_tag_t *)(p_gcm_mac));
 
-    uint32_t i;
-    bool secret_match = true;
-    for(i=0;i<secret_size;i++){
-        if(secret_share_key[i] != i){
-          secret_match = false;
-        }
-    }
-
-    if(!secret_match){
-      ret = SGX_ERROR_UNEXPECTED;
-    }
+    // uint32_t i;
+    // bool secret_match = true;
+    // for(i=0;i<secret_size;i++){
+    //     if(secret_share_key[i] != i){
+    //       secret_match = false;
+    //     }
+    // }
+    //
+    // if(!secret_match){
+    //   ret = SGX_ERROR_UNEXPECTED;
+    // }
 
     // Once the server has the shared secret, it should be sealed to
     // persistent storage for future use. This will prevents having to

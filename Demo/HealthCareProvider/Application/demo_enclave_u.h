@@ -39,6 +39,7 @@ sgx_status_t sgx_ra_proc_msg2_trusted(sgx_enclave_id_t eid, sgx_status_t* retval
 sgx_status_t sgx_ra_get_msg3_trusted(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_ra_context_t context, uint32_t quote_size, sgx_report_t* qe_report, sgx_ra_msg3_t* p_msg3, uint32_t msg3_size);
 sgx_status_t ecall_create_sealed_policy(sgx_enclave_id_t eid, sgx_status_t* retval, uint8_t* sealed_log, uint32_t sealed_log_size);
 sgx_status_t ecall_perform_sealed_policy(sgx_enclave_id_t eid, sgx_status_t* retval, const uint8_t* sealed_log, uint32_t sealed_log_size);
+sgx_status_t ecall_put_keys(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_ra_context_t context, uint8_t* p_secret, uint32_t secret_size, uint8_t* gcm_mac);
 sgx_status_t ecall_start_heartbeat(sgx_enclave_id_t eid);
 sgx_status_t ecall_perform_fun_1(sgx_enclave_id_t eid);
 sgx_status_t ecall_perform_fun_2(sgx_enclave_id_t eid);

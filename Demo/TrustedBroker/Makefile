@@ -13,7 +13,7 @@ Remote_Attestation_C_Objects := $(Remote_Attestation_C_Files:.c=.o)
 
 ######## Key Management Settings ########
 
-Key_Management_C_Files := KeyManagement/key_management.c
+Key_Management_C_Files := KeyManagement/key_management.c KeyManagement/keys.c
 
 Key_Management_Include_Paths := -IKeyManagement -IThirdPartyLibrary
 

@@ -65,6 +65,14 @@ typedef struct ms_ecall_perform_sealed_policy_t {
 	uint32_t ms_sealed_log_size;
 } ms_ecall_perform_sealed_policy_t;
 
+typedef struct ms_ecall_put_keys_t {
+	sgx_status_t ms_retval;
+	sgx_ra_context_t ms_context;
+	uint8_t* ms_p_secret;
+	uint32_t ms_secret_size;
+	uint8_t* ms_gcm_mac;
+} ms_ecall_put_keys_t;
+
 typedef struct ms_ocall_print_t {
 	char* ms_str;
 } ms_ocall_print_t;
@@ -350,24 +358,37 @@ sgx_status_t ecall_perform_sealed_policy(sgx_enclave_id_t eid, sgx_status_t* ret
 	return status;
 }
 
-sgx_status_t ecall_start_heartbeat(sgx_enclave_id_t eid)
+sgx_status_t ecall_put_keys(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_ra_context_t context, uint8_t* p_secret, uint32_t secret_size, uint8_t* gcm_mac)
 {
 	sgx_status_t status;
-	status = sgx_ecall(eid, 9, &ocall_table_demo_enclave, NULL);
+	ms_ecall_put_keys_t ms;
+	ms.ms_context = context;
+	ms.ms_p_secret = p_secret;
+	ms.ms_secret_size = secret_size;
+	ms.ms_gcm_mac = gcm_mac;
+	status = sgx_ecall(eid, 9, &ocall_table_demo_enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
 
-sgx_status_t ecall_perform_fun_1(sgx_enclave_id_t eid)
+sgx_status_t ecall_start_heartbeat(sgx_enclave_id_t eid)
 {
 	sgx_status_t status;
 	status = sgx_ecall(eid, 10, &ocall_table_demo_enclave, NULL);
 	return status;
 }
 
-sgx_status_t ecall_perform_fun_2(sgx_enclave_id_t eid)
+sgx_status_t ecall_perform_fun_1(sgx_enclave_id_t eid)
 {
 	sgx_status_t status;
 	status = sgx_ecall(eid, 11, &ocall_table_demo_enclave, NULL);
+	return status;
+}
+
+sgx_status_t ecall_perform_fun_2(sgx_enclave_id_t eid)
+{
+	sgx_status_t status;
+	status = sgx_ecall(eid, 12, &ocall_table_demo_enclave, NULL);
 	return status;
 }
 

@@ -4,6 +4,7 @@ enclave{
 
   from "RemoteAttestation/ra.edl" import *;
   from "SealSecrets/ss.edl" import *;
+  from "KeyManagement/km.edl" import *;
   from "Heartbeat/hb.edl" import *;
   from "Functions/funcs.edl" import *;
 

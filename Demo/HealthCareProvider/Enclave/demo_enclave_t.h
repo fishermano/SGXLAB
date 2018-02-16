@@ -27,6 +27,7 @@ sgx_status_t sgx_ra_proc_msg2_trusted(sgx_ra_context_t context, const sgx_ra_msg
 sgx_status_t sgx_ra_get_msg3_trusted(sgx_ra_context_t context, uint32_t quote_size, sgx_report_t* qe_report, sgx_ra_msg3_t* p_msg3, uint32_t msg3_size);
 sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log_size);
 sgx_status_t ecall_perform_sealed_policy(const uint8_t* sealed_log, uint32_t sealed_log_size);
+sgx_status_t ecall_put_keys(sgx_ra_context_t context, uint8_t* p_secret, uint32_t secret_size, uint8_t* gcm_mac);
 void ecall_start_heartbeat();
 void ecall_perform_fun_1();
 void ecall_perform_fun_2();

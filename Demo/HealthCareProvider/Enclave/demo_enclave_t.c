@@ -81,6 +81,14 @@ typedef struct ms_ecall_perform_sealed_policy_t {
 	uint32_t ms_sealed_log_size;
 } ms_ecall_perform_sealed_policy_t;
 
+typedef struct ms_ecall_put_keys_t {
+	sgx_status_t ms_retval;
+	sgx_ra_context_t ms_context;
+	uint8_t* ms_p_secret;
+	uint32_t ms_secret_size;
+	uint8_t* ms_gcm_mac;
+} ms_ecall_put_keys_t;
+
 typedef struct ms_ocall_print_t {
 	char* ms_str;
 } ms_ocall_print_t;
@@ -471,6 +479,54 @@ err:
 	return status;
 }
 
+static sgx_status_t SGX_CDECL sgx_ecall_put_keys(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_put_keys_t));
+	ms_ecall_put_keys_t* ms = SGX_CAST(ms_ecall_put_keys_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+	uint8_t* _tmp_p_secret = ms->ms_p_secret;
+	uint32_t _tmp_secret_size = ms->ms_secret_size;
+	size_t _len_p_secret = _tmp_secret_size;
+	uint8_t* _in_p_secret = NULL;
+	uint8_t* _tmp_gcm_mac = ms->ms_gcm_mac;
+	size_t _len_gcm_mac = 16 * sizeof(*_tmp_gcm_mac);
+	uint8_t* _in_gcm_mac = NULL;
+
+	if (sizeof(*_tmp_gcm_mac) != 0 &&
+		16 > (SIZE_MAX / sizeof(*_tmp_gcm_mac))) {
+		status = SGX_ERROR_INVALID_PARAMETER;
+		goto err;
+	}
+
+	CHECK_UNIQUE_POINTER(_tmp_p_secret, _len_p_secret);
+	CHECK_UNIQUE_POINTER(_tmp_gcm_mac, _len_gcm_mac);
+
+	if (_tmp_p_secret != NULL && _len_p_secret != 0) {
+		_in_p_secret = (uint8_t*)malloc(_len_p_secret);
+		if (_in_p_secret == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		memcpy(_in_p_secret, _tmp_p_secret, _len_p_secret);
+	}
+	if (_tmp_gcm_mac != NULL && _len_gcm_mac != 0) {
+		_in_gcm_mac = (uint8_t*)malloc(_len_gcm_mac);
+		if (_in_gcm_mac == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		memcpy(_in_gcm_mac, _tmp_gcm_mac, _len_gcm_mac);
+	}
+	ms->ms_retval = ecall_put_keys(ms->ms_context, _in_p_secret, _tmp_secret_size, _in_gcm_mac);
+err:
+	if (_in_p_secret) free(_in_p_secret);
+	if (_in_gcm_mac) free(_in_gcm_mac);
+
+	return status;
+}
+
 static sgx_status_t SGX_CDECL sgx_ecall_start_heartbeat(void* pms)
 {
 	sgx_status_t status = SGX_SUCCESS;
@@ -497,9 +553,9 @@ static sgx_status_t SGX_CDECL sgx_ecall_perform_fun_2(void* pms)
 
 SGX_EXTERNC const struct {
 	size_t nr_ecall;
-	struct {void* ecall_addr; uint8_t is_priv;} ecall_table[12];
+	struct {void* ecall_addr; uint8_t is_priv;} ecall_table[13];
 } g_ecall_table = {
-	12,
+	13,
 	{
 		{(void*)(uintptr_t)sgx_ecall_init_ra, 0},
 		{(void*)(uintptr_t)sgx_ecall_close_ra, 0},
@@ -510,6 +566,7 @@ SGX_EXTERNC const struct {
 		{(void*)(uintptr_t)sgx_sgx_ra_get_msg3_trusted, 0},
 		{(void*)(uintptr_t)sgx_ecall_create_sealed_policy, 0},
 		{(void*)(uintptr_t)sgx_ecall_perform_sealed_policy, 0},
+		{(void*)(uintptr_t)sgx_ecall_put_keys, 0},
 		{(void*)(uintptr_t)sgx_ecall_start_heartbeat, 0},
 		{(void*)(uintptr_t)sgx_ecall_perform_fun_1, 0},
 		{(void*)(uintptr_t)sgx_ecall_perform_fun_2, 0},
@@ -518,21 +575,21 @@ SGX_EXTERNC const struct {
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[11][12];
+	uint8_t entry_table[11][13];
 } g_dyn_entry_table = {
 	11,
 	{
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
 	}
 };
 
