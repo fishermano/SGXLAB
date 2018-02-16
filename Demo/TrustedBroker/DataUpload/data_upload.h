@@ -11,6 +11,6 @@ typedef struct _sp_samp_dev_data_t{
   uint8_t data[];
 }sp_samp_dev_data_t;
 
-int sp_upload_data(const char *cloud_storage_url, uint8_t dev_id, du_samp_package_header_t **response);
+int sp_upload_data(const char *cloud_storage_url, uint8_t dev_id, uint8_t offset, du_samp_package_header_t **response);
 
 #endif

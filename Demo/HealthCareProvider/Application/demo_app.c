@@ -177,6 +177,13 @@ int SGX_CDECL main(int argc, char *argv[]){
   hcp_samp_certificate_t * hcp = NULL;
   sp_aes_gcm_data_t *p_enc_dev_keys = NULL;
 
+  du_samp_package_header_t *dev_0_offset_0_data_resp = NULL;
+  du_samp_package_header_t *dev_0_offset_1_data_resp = NULL;
+  du_samp_package_header_t *dev_0_offset_2_data_resp = NULL;
+  sp_aes_gcm_data_t *p_enc_dev_0_offset_0_data = NULL;
+  sp_aes_gcm_data_t *p_enc_dev_0_offset_1_data = NULL;
+  sp_aes_gcm_data_t *p_enc_dev_0_offset_2_data = NULL;
+
   /*
     define retry parameters
   */
@@ -702,13 +709,40 @@ CLEANUP:
     goto FINAL;
   }
 
+  fprintf(OUTPUT, "\nDevice keys loaded \n");
+
+  printf("\n***Perform Add Function Over Dev0_0 and Dev0_1***\n");
+
+  ret = dr_network_send_receive("http://demo_testing.storage.cloud/", 0, 0, &dev_0_offset_0_data_resp);
+
+  if(ret !=0 || !dev_0_offset_0_data_resp){
+    ret = -1;
+    fprintf(OUTPUT, "\nError, dev 0 offset 0 data retrieve failed [%s].", __FUNCTION__);
+  }
+
+  p_enc_dev_0_offset_0_data = (sp_aes_gcm_data_t*)((uint8_t*)dev_0_offset_0_data_resp + sizeof(du_samp_package_header_t));
+
+  ret = dr_network_send_receive("http://demo_testing.storage.cloud/", 0, 1, &dev_0_offset_1_data_resp);
+
+  if(ret !=0 || !dev_0_offset_1_data_resp){
+    ret = -1;
+    fprintf(OUTPUT, "\nError, dev 0 offset 1 data retrieve failed [%s].", __FUNCTION__);
+  }
+
+  p_enc_dev_0_offset_1_data = (sp_aes_gcm_data_t*)((uint8_t*)dev_0_offset_1_data_resp + sizeof(du_samp_package_header_t));
+
+  ret = dr_network_send_receive("http://demo_testing.storage.cloud/", 0, 2, &dev_0_offset_2_data_resp);
+
+  if(ret !=0 || !dev_0_offset_2_data_resp){
+    ret = -1;
+    fprintf(OUTPUT, "\nError, dev 0 offset 2 data retrieve failed [%s].", __FUNCTION__);
+  }
+
+  p_enc_dev_0_offset_2_data = (sp_aes_gcm_data_t*)((uint8_t*)dev_0_offset_2_data_resp + sizeof(du_samp_package_header_t));
+  
 
   printf("\n***Heartbeat Functionality***\n");
   ecall_start_heartbeat(global_eid);
-
-  printf("\n***Functions Functionality***\n");
-  ecall_perform_fun_1(global_eid);
-  ecall_perform_fun_2(global_eid);
 
 
 FINAL:

@@ -183,5 +183,25 @@ int kq_network_send_receive(const char *server_url, const kd_samp_package_header
 }
 
 int dr_network_send_receive(const char *server_url, const uint8_t dev_id, const uint8_t offset, du_samp_package_header_t **p_resp){
+  int ret = 0;
+  du_samp_package_header_t *p_resp_msg;
 
+  if(NULL == server_url){
+    ret = -1;
+    return ret;
+  }
+
+  ret = sp_upload_data(server_url, dev_id, offset, &p_resp_msg);
+
+  if(0 != ret)
+  {
+      fprintf(stderr, "\nError, call sp_upload_data fail [%s].",
+          __FUNCTION__);
+  }
+  else
+  {
+      *p_resp = p_resp_msg;
+  }
+
+  return ret;
 }
