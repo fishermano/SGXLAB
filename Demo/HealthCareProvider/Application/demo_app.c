@@ -744,15 +744,23 @@ CLEANUP:
 
   printf("\n***Perform Add Function Over Dev0_0, Dev0_1 and Dev0_2***\n");
 
-  ret = ecall_perform_sum_fun(global_eid, &status, p_enc_dev_0_offset_0_data->payload, p_enc_dev_0_offset_0_data->payload_size, p_enc_dev_0_offset_0_data->payload_tag, 0,  p_enc_dev_0_offset_1_data->payload, p_enc_dev_0_offset_1_data->payload_size, p_enc_dev_0_offset_1_data->payload_tag, 0, &perform_sum_fun_result);
-
-  printf("\nThe final computation result returned from enclave is: %d\n", perform_sum_fun_result);
+  /*
+    start heartbeat mechanism for the enclave, or no ecall function can be executed
+  */
 
   printf("\n***Heartbeat Functionality***\n");
   ecall_start_heartbeat(global_eid, &status);
 
+  ret = ecall_perform_sum_fun(global_eid, &status, p_enc_dev_0_offset_0_data->payload, p_enc_dev_0_offset_0_data->payload_size, p_enc_dev_0_offset_0_data->payload_tag, 0,  p_enc_dev_0_offset_1_data->payload, p_enc_dev_0_offset_1_data->payload_size, p_enc_dev_0_offset_1_data->payload_tag, 0, &perform_sum_fun_result);
+
+  printf("\nThe final computation result returned from enclave is: %d\n", perform_sum_fun_result);
 
 FINAL:
+
+  /*
+    when an encalve is stoped, you need end hearbeat mechanism exploitly by revoking ecall_end_heartbeat()
+  */
+  ecall_end_heartbeat(global_eid, &status);
 
   sgx_destroy_enclave(global_eid);
 

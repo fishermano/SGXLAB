@@ -76,6 +76,10 @@ typedef struct ms_ecall_start_heartbeat_t {
 	sgx_status_t ms_retval;
 } ms_ecall_start_heartbeat_t;
 
+typedef struct ms_ecall_end_heartbeat_t {
+	sgx_status_t ms_retval;
+} ms_ecall_end_heartbeat_t;
+
 typedef struct ms_ecall_perform_sum_fun_t {
 	sgx_status_t ms_retval;
 	uint8_t* ms_p_secret_1;
@@ -395,6 +399,15 @@ sgx_status_t ecall_start_heartbeat(sgx_enclave_id_t eid, sgx_status_t* retval)
 	return status;
 }
 
+sgx_status_t ecall_end_heartbeat(sgx_enclave_id_t eid, sgx_status_t* retval)
+{
+	sgx_status_t status;
+	ms_ecall_end_heartbeat_t ms;
+	status = sgx_ecall(eid, 11, &ocall_table_demo_enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
+	return status;
+}
+
 sgx_status_t ecall_perform_sum_fun(sgx_enclave_id_t eid, sgx_status_t* retval, uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1, uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t* result)
 {
 	sgx_status_t status;
@@ -408,7 +421,7 @@ sgx_status_t ecall_perform_sum_fun(sgx_enclave_id_t eid, sgx_status_t* retval, u
 	ms.ms_gcm_mac_2 = gcm_mac_2;
 	ms.ms_dev_id_2 = dev_id_2;
 	ms.ms_result = result;
-	status = sgx_ecall(eid, 11, &ocall_table_demo_enclave, &ms);
+	status = sgx_ecall(eid, 12, &ocall_table_demo_enclave, &ms);
 	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }

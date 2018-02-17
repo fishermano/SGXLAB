@@ -12,3 +12,14 @@ sgx_status_t ecall_start_heartbeat(void){
 
   return ret;
 }
+
+sgx_status_t ecall_end_heartbeat(void){
+  ocall_print("testing enclave function: ecall_end_heartbeat()");
+
+  sgx_status_t ret = SGX_SUCCESS;
+
+  hb_active = STATUS_HB_INACTIVE;
+
+  return ret;
+
+}

@@ -92,6 +92,10 @@ typedef struct ms_ecall_start_heartbeat_t {
 	sgx_status_t ms_retval;
 } ms_ecall_start_heartbeat_t;
 
+typedef struct ms_ecall_end_heartbeat_t {
+	sgx_status_t ms_retval;
+} ms_ecall_end_heartbeat_t;
+
 typedef struct ms_ecall_perform_sum_fun_t {
 	sgx_status_t ms_retval;
 	uint8_t* ms_p_secret_1;
@@ -556,6 +560,19 @@ static sgx_status_t SGX_CDECL sgx_ecall_start_heartbeat(void* pms)
 	return status;
 }
 
+static sgx_status_t SGX_CDECL sgx_ecall_end_heartbeat(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_end_heartbeat_t));
+	ms_ecall_end_heartbeat_t* ms = SGX_CAST(ms_ecall_end_heartbeat_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+
+
+	ms->ms_retval = ecall_end_heartbeat();
+
+
+	return status;
+}
+
 static sgx_status_t SGX_CDECL sgx_ecall_perform_sum_fun(void* pms)
 {
 	CHECK_REF_POINTER(pms, sizeof(ms_ecall_perform_sum_fun_t));
@@ -657,9 +674,9 @@ err:
 
 SGX_EXTERNC const struct {
 	size_t nr_ecall;
-	struct {void* ecall_addr; uint8_t is_priv;} ecall_table[12];
+	struct {void* ecall_addr; uint8_t is_priv;} ecall_table[13];
 } g_ecall_table = {
-	12,
+	13,
 	{
 		{(void*)(uintptr_t)sgx_ecall_init_ra, 0},
 		{(void*)(uintptr_t)sgx_ecall_close_ra, 0},
@@ -672,27 +689,28 @@ SGX_EXTERNC const struct {
 		{(void*)(uintptr_t)sgx_ecall_perform_sealed_policy, 0},
 		{(void*)(uintptr_t)sgx_ecall_put_keys, 0},
 		{(void*)(uintptr_t)sgx_ecall_start_heartbeat, 0},
+		{(void*)(uintptr_t)sgx_ecall_end_heartbeat, 0},
 		{(void*)(uintptr_t)sgx_ecall_perform_sum_fun, 0},
 	}
 };
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[11][12];
+	uint8_t entry_table[11][13];
 } g_dyn_entry_table = {
 	11,
 	{
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
 	}
 };
 

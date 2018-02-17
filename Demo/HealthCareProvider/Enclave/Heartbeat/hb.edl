@@ -3,5 +3,6 @@
 enclave{
   trusted{
     public sgx_status_t ecall_start_heartbeat(void);
+    public sgx_status_t ecall_end_heartbeat(void);
   };
 };

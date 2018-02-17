@@ -5,9 +5,16 @@
 #include "../demo_enclave_t.h"
 
 extern key_set_t *p_key_set;
+extern uint8_t hb_active;
 
 sgx_status_t ecall_perform_sum_fun(uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1,  uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t *result){
   ocall_print("testing enclave function: ecall_perform_fun_1()");
+
+  if(STATUS_HB_ACTIVE != hb_active){
+    ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
+
+    return SGX_ERROR_UNEXPECTED;
+  }
 
   if(NULL == p_key_set){
     ocall_print("\ncurrent key set is null, keys can be requested or uncovered from second storage\n");
