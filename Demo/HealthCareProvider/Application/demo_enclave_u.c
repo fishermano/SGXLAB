@@ -72,6 +72,10 @@ typedef struct ms_ecall_put_keys_t {
 	uint8_t* ms_gcm_mac;
 } ms_ecall_put_keys_t;
 
+typedef struct ms_ecall_start_heartbeat_t {
+	sgx_status_t ms_retval;
+} ms_ecall_start_heartbeat_t;
+
 typedef struct ms_ecall_perform_sum_fun_t {
 	sgx_status_t ms_retval;
 	uint8_t* ms_p_secret_1;
@@ -382,10 +386,12 @@ sgx_status_t ecall_put_keys(sgx_enclave_id_t eid, sgx_status_t* retval, uint8_t*
 	return status;
 }
 
-sgx_status_t ecall_start_heartbeat(sgx_enclave_id_t eid)
+sgx_status_t ecall_start_heartbeat(sgx_enclave_id_t eid, sgx_status_t* retval)
 {
 	sgx_status_t status;
-	status = sgx_ecall(eid, 10, &ocall_table_demo_enclave, NULL);
+	ms_ecall_start_heartbeat_t ms;
+	status = sgx_ecall(eid, 10, &ocall_table_demo_enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
 

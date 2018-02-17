@@ -1,3 +1,6 @@
+#ifndef UTILS_H
+#define UTILS_H
+
 #include <stdio.h>
 
 // Needed for definition of remote attestation messages.
@@ -20,3 +23,5 @@ int ra_network_send_receive(const char *server_url, const ra_samp_request_header
 int kq_network_send_receive(const char *server_url, const kd_samp_package_header_t *p_req, kd_samp_package_header_t **p_resp);
 
 int dr_network_send_receive(const char *server_url, const uint8_t dev_id, const uint8_t offset, du_samp_package_header_t **p_resp);
+
+#endif

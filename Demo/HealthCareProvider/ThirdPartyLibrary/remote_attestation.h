@@ -1,3 +1,6 @@
+#ifndef REMOTE_ATTESTATION_H
+#define REMOTE_ATTESTATION_H
+
 #include "remote_attestation_result.h"
 #include "ias_ra.h"
 #include "network_ra.h"
@@ -113,3 +116,5 @@ typedef struct sample_extended_epid_group
     sample_get_sigrl get_sigrl;
     sample_verify_attestation_evidence verify_attestation_evidence;
 } sample_extended_epid_group;
+
+#endif

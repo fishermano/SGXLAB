@@ -749,7 +749,7 @@ CLEANUP:
   printf("\nThe final computation result returned from enclave is: %d\n", perform_sum_fun_result);
 
   printf("\n***Heartbeat Functionality***\n");
-  ecall_start_heartbeat(global_eid);
+  ecall_start_heartbeat(global_eid, &status);
 
 
 FINAL:

@@ -1,3 +1,6 @@
+#ifndef DEMO_APP_H
+#define DEMO_APP_H
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,3 +122,5 @@ static sgx_errlist_t sgx_errlist[] = {
         NULL
     },
 };
+
+#endif

@@ -7,6 +7,9 @@
 
 #include "demo_enclave.h"
 
+//heartbeat mechanism status
+uint8_t hb_active = STATUS_HB_INACTIVE;
+
 // secret shared key between demo_app and trusted broker
 // during remote attestation
 uint8_t secret_share_key[16] = {0};

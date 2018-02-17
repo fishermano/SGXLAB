@@ -1,6 +1,14 @@
+#include "../demo_enclave.h"
 #include "../demo_enclave_t.h"
 
-void ecall_start_heartbeat(void){
+extern uint8_t hb_active;
+
+sgx_status_t ecall_start_heartbeat(void){
   ocall_print("testing enclave function: ecall_start_heartbeat()");
-  return;
+
+  sgx_status_t ret = SGX_SUCCESS;
+
+  hb_active = STATUS_HB_ACTIVE;
+
+  return ret;
 }

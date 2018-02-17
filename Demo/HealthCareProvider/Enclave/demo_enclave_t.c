@@ -88,6 +88,10 @@ typedef struct ms_ecall_put_keys_t {
 	uint8_t* ms_gcm_mac;
 } ms_ecall_put_keys_t;
 
+typedef struct ms_ecall_start_heartbeat_t {
+	sgx_status_t ms_retval;
+} ms_ecall_start_heartbeat_t;
+
 typedef struct ms_ecall_perform_sum_fun_t {
 	sgx_status_t ms_retval;
 	uint8_t* ms_p_secret_1;
@@ -541,9 +545,14 @@ err:
 
 static sgx_status_t SGX_CDECL sgx_ecall_start_heartbeat(void* pms)
 {
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_start_heartbeat_t));
+	ms_ecall_start_heartbeat_t* ms = SGX_CAST(ms_ecall_start_heartbeat_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
-	if (pms != NULL) return SGX_ERROR_INVALID_PARAMETER;
-	ecall_start_heartbeat();
+
+
+	ms->ms_retval = ecall_start_heartbeat();
+
+
 	return status;
 }
 
