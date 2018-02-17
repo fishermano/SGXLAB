@@ -72,15 +72,18 @@ typedef struct ms_ecall_put_keys_t {
 	uint8_t* ms_gcm_mac;
 } ms_ecall_put_keys_t;
 
-typedef struct ms_ecall_perform_add_fun_t {
+typedef struct ms_ecall_perform_sum_fun_t {
 	sgx_status_t ms_retval;
 	uint8_t* ms_p_secret_1;
 	uint32_t ms_secret_size_1;
 	uint8_t* ms_gcm_mac_1;
+	uint8_t ms_dev_id_1;
 	uint8_t* ms_p_secret_2;
 	uint32_t ms_secret_size_2;
 	uint8_t* ms_gcm_mac_2;
-} ms_ecall_perform_add_fun_t;
+	uint8_t ms_dev_id_2;
+	uint32_t* ms_result;
+} ms_ecall_perform_sum_fun_t;
 
 typedef struct ms_ocall_print_t {
 	char* ms_str;
@@ -386,16 +389,19 @@ sgx_status_t ecall_start_heartbeat(sgx_enclave_id_t eid)
 	return status;
 }
 
-sgx_status_t ecall_perform_add_fun(sgx_enclave_id_t eid, sgx_status_t* retval, uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2)
+sgx_status_t ecall_perform_sum_fun(sgx_enclave_id_t eid, sgx_status_t* retval, uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1, uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t* result)
 {
 	sgx_status_t status;
-	ms_ecall_perform_add_fun_t ms;
+	ms_ecall_perform_sum_fun_t ms;
 	ms.ms_p_secret_1 = p_secret_1;
 	ms.ms_secret_size_1 = secret_size_1;
 	ms.ms_gcm_mac_1 = gcm_mac_1;
+	ms.ms_dev_id_1 = dev_id_1;
 	ms.ms_p_secret_2 = p_secret_2;
 	ms.ms_secret_size_2 = secret_size_2;
 	ms.ms_gcm_mac_2 = gcm_mac_2;
+	ms.ms_dev_id_2 = dev_id_2;
+	ms.ms_result = result;
 	status = sgx_ecall(eid, 11, &ocall_table_demo_enclave, &ms);
 	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;

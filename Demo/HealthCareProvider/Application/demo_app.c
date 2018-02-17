@@ -184,6 +184,8 @@ int SGX_CDECL main(int argc, char *argv[]){
   sp_aes_gcm_data_t *p_enc_dev_0_offset_1_data = NULL;
   sp_aes_gcm_data_t *p_enc_dev_0_offset_2_data = NULL;
 
+  uint32_t perform_sum_fun_result = -1;
+
   /*
     define retry parameters
   */
@@ -711,8 +713,6 @@ CLEANUP:
 
   fprintf(OUTPUT, "\nDevice keys loaded \n");
 
-  printf("\n***Perform Add Function Over Dev0_0 and Dev0_1***\n");
-
   ret = dr_network_send_receive("http://demo_testing.storage.cloud/", 0, 0, &dev_0_offset_0_data_resp);
 
   if(ret !=0 || !dev_0_offset_0_data_resp){
@@ -739,7 +739,14 @@ CLEANUP:
   }
 
   p_enc_dev_0_offset_2_data = (sp_aes_gcm_data_t*)((uint8_t*)dev_0_offset_2_data_resp + sizeof(du_samp_package_header_t));
-  
+
+  printf("\nEnclave perform functions over these data\n");
+
+  printf("\n***Perform Add Function Over Dev0_0, Dev0_1 and Dev0_2***\n");
+
+  ret = ecall_perform_sum_fun(global_eid, &status, p_enc_dev_0_offset_0_data->payload, p_enc_dev_0_offset_0_data->payload_size, p_enc_dev_0_offset_0_data->payload_tag, 0,  p_enc_dev_0_offset_1_data->payload, p_enc_dev_0_offset_1_data->payload_size, p_enc_dev_0_offset_1_data->payload_tag, 0, &perform_sum_fun_result);
+
+  printf("\nThe final computation result returned from enclave is: %d\n", perform_sum_fun_result);
 
   printf("\n***Heartbeat Functionality***\n");
   ecall_start_heartbeat(global_eid);

@@ -57,7 +57,5 @@ sgx_status_t ecall_put_keys(uint8_t *p_secret, uint32_t secret_size, uint8_t *p_
 
   }while(0);
 
-
-
   return ret;
 }

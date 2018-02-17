@@ -88,15 +88,18 @@ typedef struct ms_ecall_put_keys_t {
 	uint8_t* ms_gcm_mac;
 } ms_ecall_put_keys_t;
 
-typedef struct ms_ecall_perform_add_fun_t {
+typedef struct ms_ecall_perform_sum_fun_t {
 	sgx_status_t ms_retval;
 	uint8_t* ms_p_secret_1;
 	uint32_t ms_secret_size_1;
 	uint8_t* ms_gcm_mac_1;
+	uint8_t ms_dev_id_1;
 	uint8_t* ms_p_secret_2;
 	uint32_t ms_secret_size_2;
 	uint8_t* ms_gcm_mac_2;
-} ms_ecall_perform_add_fun_t;
+	uint8_t ms_dev_id_2;
+	uint32_t* ms_result;
+} ms_ecall_perform_sum_fun_t;
 
 typedef struct ms_ocall_print_t {
 	char* ms_str;
@@ -544,10 +547,10 @@ static sgx_status_t SGX_CDECL sgx_ecall_start_heartbeat(void* pms)
 	return status;
 }
 
-static sgx_status_t SGX_CDECL sgx_ecall_perform_add_fun(void* pms)
+static sgx_status_t SGX_CDECL sgx_ecall_perform_sum_fun(void* pms)
 {
-	CHECK_REF_POINTER(pms, sizeof(ms_ecall_perform_add_fun_t));
-	ms_ecall_perform_add_fun_t* ms = SGX_CAST(ms_ecall_perform_add_fun_t*, pms);
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_perform_sum_fun_t));
+	ms_ecall_perform_sum_fun_t* ms = SGX_CAST(ms_ecall_perform_sum_fun_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
 	uint8_t* _tmp_p_secret_1 = ms->ms_p_secret_1;
 	uint32_t _tmp_secret_size_1 = ms->ms_secret_size_1;
@@ -563,6 +566,9 @@ static sgx_status_t SGX_CDECL sgx_ecall_perform_add_fun(void* pms)
 	uint8_t* _tmp_gcm_mac_2 = ms->ms_gcm_mac_2;
 	size_t _len_gcm_mac_2 = 16 * sizeof(*_tmp_gcm_mac_2);
 	uint8_t* _in_gcm_mac_2 = NULL;
+	uint32_t* _tmp_result = ms->ms_result;
+	size_t _len_result = sizeof(*_tmp_result);
+	uint32_t* _in_result = NULL;
 
 	if (sizeof(*_tmp_gcm_mac_1) != 0 &&
 		16 > (SIZE_MAX / sizeof(*_tmp_gcm_mac_1))) {
@@ -580,6 +586,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_perform_add_fun(void* pms)
 	CHECK_UNIQUE_POINTER(_tmp_gcm_mac_1, _len_gcm_mac_1);
 	CHECK_UNIQUE_POINTER(_tmp_p_secret_2, _len_p_secret_2);
 	CHECK_UNIQUE_POINTER(_tmp_gcm_mac_2, _len_gcm_mac_2);
+	CHECK_UNIQUE_POINTER(_tmp_result, _len_result);
 
 	if (_tmp_p_secret_1 != NULL && _len_p_secret_1 != 0) {
 		_in_p_secret_1 = (uint8_t*)malloc(_len_p_secret_1);
@@ -617,12 +624,24 @@ static sgx_status_t SGX_CDECL sgx_ecall_perform_add_fun(void* pms)
 
 		memcpy(_in_gcm_mac_2, _tmp_gcm_mac_2, _len_gcm_mac_2);
 	}
-	ms->ms_retval = ecall_perform_add_fun(_in_p_secret_1, _tmp_secret_size_1, _in_gcm_mac_1, _in_p_secret_2, _tmp_secret_size_2, _in_gcm_mac_2);
+	if (_tmp_result != NULL && _len_result != 0) {
+		if ((_in_result = (uint32_t*)malloc(_len_result)) == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		memset((void*)_in_result, 0, _len_result);
+	}
+	ms->ms_retval = ecall_perform_sum_fun(_in_p_secret_1, _tmp_secret_size_1, _in_gcm_mac_1, ms->ms_dev_id_1, _in_p_secret_2, _tmp_secret_size_2, _in_gcm_mac_2, ms->ms_dev_id_2, _in_result);
 err:
 	if (_in_p_secret_1) free(_in_p_secret_1);
 	if (_in_gcm_mac_1) free(_in_gcm_mac_1);
 	if (_in_p_secret_2) free(_in_p_secret_2);
 	if (_in_gcm_mac_2) free(_in_gcm_mac_2);
+	if (_in_result) {
+		memcpy(_tmp_result, _in_result, _len_result);
+		free(_in_result);
+	}
 
 	return status;
 }
@@ -644,7 +663,7 @@ SGX_EXTERNC const struct {
 		{(void*)(uintptr_t)sgx_ecall_perform_sealed_policy, 0},
 		{(void*)(uintptr_t)sgx_ecall_put_keys, 0},
 		{(void*)(uintptr_t)sgx_ecall_start_heartbeat, 0},
-		{(void*)(uintptr_t)sgx_ecall_perform_add_fun, 0},
+		{(void*)(uintptr_t)sgx_ecall_perform_sum_fun, 0},
 	}
 };
 
