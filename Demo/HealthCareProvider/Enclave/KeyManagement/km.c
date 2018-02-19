@@ -6,9 +6,16 @@
 
 extern uint8_t u_secret_share_key[16];
 extern key_set_t *p_key_set;
+extern uint8_t hb_active;
 
 sgx_status_t ecall_put_keys(uint8_t *p_secret, uint32_t secret_size, uint8_t *p_gcm_mac){
   ocall_print("testing enclave function: ecall_put_keys()");
+
+  if(STATUS_HB_ACTIVE != hb_active){
+    ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
+
+    return SGX_ERROR_UNEXPECTED;
+  }
 
   if(NULL == p_key_set){
     ocall_print("\ncurrent key set is null\n");

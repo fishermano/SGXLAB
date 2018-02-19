@@ -28,6 +28,7 @@ typedef struct _replay_protected_pay_load
 
 extern uint8_t secret_share_key[16];
 extern uint8_t device_keys[DEVICE_KEY_MAX_NUM][8];
+extern uint8_t hb_active;
 
 // Used to store the secret recovered from the outside. The
 // size is forced to be 8 bytes. Expected value is
@@ -118,6 +119,12 @@ static sgx_status_t verify_sealed_data(
 sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log_size){
   ocall_print("testing enclave function: ecall_create_sealed_policy()");
 
+  if(STATUS_HB_ACTIVE != hb_active){
+    ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
+
+    return SGX_ERROR_UNEXPECTED;
+  }
+
   sgx_status_t ret = SGX_SUCCESS;
   int busy_retry_times = 2;
   replay_protected_pay_load data2seal;
@@ -196,6 +203,12 @@ sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log
 
 sgx_status_t ecall_perform_sealed_policy(const uint8_t* sealed_log, uint32_t sealed_log_size){
   ocall_print("testing enclave function: ecall_perform_sealed_policy()");
+
+  if(STATUS_HB_ACTIVE != hb_active){
+    ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
+
+    return SGX_ERROR_UNEXPECTED;
+  }
 
   sgx_status_t ret = SGX_SUCCESS;
   int busy_retry_times = 2;
