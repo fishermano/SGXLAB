@@ -30,7 +30,7 @@ sgx_status_t ecall_perform_sealed_policy(const uint8_t* sealed_log, uint32_t sea
 sgx_status_t ecall_put_keys(uint8_t* p_secret, uint32_t secret_size, uint8_t* gcm_mac);
 sgx_status_t ecall_start_heartbeat();
 sgx_status_t ecall_end_heartbeat();
-sgx_status_t ecall_perform_sum_fun(uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1, uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t* result);
+sgx_status_t ecall_perform_fun(uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1, uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t* result);
 
 sgx_status_t SGX_CDECL ocall_print(const char* str);
 sgx_status_t SGX_CDECL ocall_print_int(int num);

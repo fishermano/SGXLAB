@@ -7,8 +7,11 @@
 extern key_set_t *p_key_set;
 extern uint8_t hb_active;
 
-sgx_status_t ecall_perform_sum_fun(uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1,  uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t *result){
+sgx_status_t ecall_perform_fun(uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1,  uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t *result){
   ocall_print("testing enclave function: ecall_perform_fun_1()");
+
+  float mean = 0.0;
+  float variance = 0.0;
 
   if(STATUS_HB_ACTIVE != hb_active){
     ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
@@ -62,36 +65,47 @@ sgx_status_t ecall_perform_sum_fun(uint8_t* p_secret_1, uint32_t secret_size_1, 
   do{
 
     dev_data_t *data_1 = (dev_data_t *)malloc(sizeof(dev_data_t));
+    dev_data_t *data_2 = (dev_data_t *)malloc(sizeof(dev_data_t));
 
     uint8_t aes_gcm_iv[12] = {0};
     ret = sgx_rijndael128GCM_decrypt(&secret_key_1, p_secret_1, secret_size_1, &data_1->size, &aes_gcm_iv[0], 12, NULL, 0, (const sgx_aes_gcm_128bit_tag_t *)(gcm_mac_1));
 
-    ocall_print("\nDecrypted secret data 1 size:\n");
-    ocall_print_int(data_1->size);
-    ocall_print("\n");
+    // ocall_print("\nDecrypted secret data 1 size:\n");
+    // ocall_print_int(data_1->size);
+    // ocall_print("\n");
+    // ocall_print("\n##################################\n");
+
+    ret = sgx_rijndael128GCM_decrypt(&secret_key_2, p_secret_2, secret_size_2, &data_2->size, &aes_gcm_iv[0], 12, NULL, 0, (const sgx_aes_gcm_128bit_tag_t *)(gcm_mac_2));
+
+    // ocall_print("\nDecrypted secret data 2 size:\n");
+    // ocall_print_int(data_2->size);
+    // ocall_print("\n");
 
     uint32_t i;
 
     for(i=0;i<data_1->size;i++){
-        ocall_print_int(data_1->data[i]);
+        // ocall_print_int(data_1->data[i]);
         *result = *result + data_1->data[i];
     }
-    ocall_print("\n##################################\n");
-
-
-    dev_data_t *data_2 = (dev_data_t *)malloc(sizeof(dev_data_t));
-
-    ret = sgx_rijndael128GCM_decrypt(&secret_key_2, p_secret_2, secret_size_2, &data_2->size, &aes_gcm_iv[0], 12, NULL, 0, (const sgx_aes_gcm_128bit_tag_t *)(gcm_mac_2));
-
-    ocall_print("\nDecrypted secret data 2 size:\n");
-    ocall_print_int(data_2->size);
-    ocall_print("\n");
 
     for(i=0;i<data_2->size;i++){
-        ocall_print_int(data_2->data[i]);
+        // ocall_print_int(data_2->data[i]);
         *result = *result + data_2->data[i];
     }
-    ocall_print("\n##################################\n");
+    // ocall_print("\n##################################\n");
+
+    mean = (*result / 16);
+
+    for(i=0;i<data_1->size;i++){
+        variance = variance + ((data_1->data[i] - mean) * (data_1->data[i] - mean)) / (16 - 1);
+    }
+
+    for(i=0;i<data_2->size;i++){
+        variance = variance + ((data_2->data[i] - mean) * (data_2->data[i] - mean)) / (16 - 1);
+    }
+
+    ocall_print_int((int)mean);
+    ocall_print_int((int)variance);
 
     // uint32_t i;
     // bool secret_match = true;
