@@ -1,5 +1,6 @@
 #include "sgx_tcrypto.h"
 #include "string.h"
+#include <time.h>
 
 #include "../demo_enclave.h"
 #include "../demo_enclave_t.h"
@@ -83,6 +84,7 @@ sgx_status_t ecall_perform_fun(uint8_t* p_secret_1, uint32_t secret_size_1, uint
 
     uint32_t i;
 
+
     for(i=0;i<data_1->size;i++){
         // ocall_print_int(data_1->data[i]);
         *result = *result + data_1->data[i];
@@ -103,6 +105,7 @@ sgx_status_t ecall_perform_fun(uint8_t* p_secret_1, uint32_t secret_size_1, uint
     for(i=0;i<data_2->size;i++){
         variance = variance + ((data_2->data[i] - mean) * (data_2->data[i] - mean)) / (16 - 1);
     }
+
 
     ocall_print_int((int)mean);
     ocall_print_int((int)variance);

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
+#include <time.h>
 
 #include "data_upload.h"
 #include "remote_attestation_result.h" //for encrypted data format sp_aes_gcm_data_t
@@ -82,19 +83,34 @@ int sp_upload_data(const char *cloud_storage_url, uint8_t dev_id, uint8_t offset
     memcpy(&dev_key, &d_key4, sizeof(d_key1));
   }
 
-  int ret = sample_rijndael128GCM_encrypt(&dev_key,
-              &p_dev_data->size,
-              dev_data_size,
-              p_encrypted_data->payload,
-              &aes_gcm_iv[0],
-              SAMPLE_SP_IV_SIZE,
-              NULL,
-              0,
-              &p_encrypted_data->payload_tag);
-  if(SAMPLE_SUCCESS != ret){
-    fprintf(stderr, "\nError, data encryption in [%s].\n", __FUNCTION__);
-    return -1;
+  clock_t start, end;
+  double time;
+  double sum_time = 0.0;
+  double average_time = 0.0;
+
+
+  for(int m = 0; m < 100; m++){
+    start = clock();
+    int ret = sample_rijndael128GCM_encrypt(&dev_key,
+                &p_dev_data->size,
+                dev_data_size,
+                p_encrypted_data->payload,
+                &aes_gcm_iv[0],
+                SAMPLE_SP_IV_SIZE,
+                NULL,
+                0,
+                &p_encrypted_data->payload_tag);
+    // if(SAMPLE_SUCCESS != ret){
+    //   fprintf(stderr, "\nError, data encryption in [%s].\n", __FUNCTION__);
+    //   return -1;
+    // }
+    end = clock();
+    time = (double)(end - start)/CLOCKS_PER_SEC;
+    sum_time = sum_time + time;
   }
+  average_time = sum_time / 100;
+  printf("\n average encryption time is: %lf\n", (average_time * 1000000));
+
 
   p_encrypted_data->payload_size = dev_data_size;
 

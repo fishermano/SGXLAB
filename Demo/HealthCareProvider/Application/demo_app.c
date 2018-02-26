@@ -39,6 +39,8 @@
 */
 #include "sgx_uae_service.h"
 
+#include <time.h>
+
 
 #ifndef SAFE_FREE
 #define SAFE_FREE(ptr) {if (NULL != (ptr)) {free(ptr); (ptr) = NULL;}}
@@ -185,6 +187,20 @@ int SGX_CDECL main(int argc, char *argv[]){
   sp_aes_gcm_data_t *p_enc_dev_0_offset_2_data = NULL;
 
   uint32_t perform_sum_fun_result = -1;
+
+  double sum_time = 0.0;
+  double average_time = 0.0;
+  uint32_t result_temp = 0;
+  double mean = 0.0;
+  double variance = 0.0;
+
+  uint8_t evaluation_data_1[8] = {
+    0xf5, 0x5b, 0x56, 0xf0, 0xac, 0x7f, 0x78, 0x39
+  };
+
+  uint8_t evaluation_data_2[8] = {
+    0x39, 0x85, 0x37, 0xfe, 0xad, 0x1f, 0xc7, 0x59
+  };
 
   /*
     define retry parameters
@@ -751,7 +767,54 @@ CLEANUP:
 
   printf("\n***Perform Add Function Over Dev0_0, Dev0_1 and Dev0_2***\n");
 
-  ret = ecall_perform_fun(global_eid, &status, p_enc_dev_0_offset_0_data->payload, p_enc_dev_0_offset_0_data->payload_size, p_enc_dev_0_offset_0_data->payload_tag, 0,  p_enc_dev_0_offset_1_data->payload, p_enc_dev_0_offset_1_data->payload_size, p_enc_dev_0_offset_1_data->payload_tag, 0, &perform_sum_fun_result);
+  clock_t start, end;
+  double time;
+
+
+  // for(int m = 0; m < 100; m++){
+  //   start = clock();
+    ret = ecall_perform_fun(global_eid, &status, p_enc_dev_0_offset_0_data->payload, p_enc_dev_0_offset_0_data->payload_size, p_enc_dev_0_offset_0_data->payload_tag, 0,  p_enc_dev_0_offset_1_data->payload, p_enc_dev_0_offset_1_data->payload_size, p_enc_dev_0_offset_1_data->payload_tag, 0, &perform_sum_fun_result);
+    // end = clock();
+    // time = (double)(end - start)/CLOCKS_PER_SEC;
+    // sum_time = sum_time + time;
+  // }
+  // average_time = sum_time / 100;
+  // printf("\n average execution is: %lf\n", (average_time * 1000000));
+
+  int i, m;
+  for(m = 0; m < 100; m++){
+    result_temp = 0;
+    variance = 0.0;
+    mean = 0.0;
+    start = clock();
+
+    for(i=0;i<8;i++){
+        result_temp = result_temp + evaluation_data_1[i];
+    }
+
+    for(i=0;i<8;i++){
+        // ocall_print_int(data_2->data[i]);
+        result_temp = result_temp + evaluation_data_2[i];
+    }
+    // ocall_print("\n##################################\n");
+
+    mean = (result_temp / 16);
+
+    for(i=0;i<8;i++){
+        variance = variance + ((evaluation_data_1[i] - mean) * (evaluation_data_1[i] - mean)) / (16 - 1);
+    }
+
+    for(i=0;i<8;i++){
+        variance = variance + ((evaluation_data_2[i] - mean) * (evaluation_data_2[i] - mean)) / (16 - 1);
+    }
+
+    end = clock();
+    time = (double)(end - start)/CLOCKS_PER_SEC;
+    sum_time = sum_time + time;
+  }
+  average_time = sum_time / 100;
+  printf("\n mean: %d; variance: %d; average execution is: %lf\n", (int)mean, (int)variance, (average_time * 1000000));
+
 
   printf("\nThe final computation result returned from enclave is: %d\n", perform_sum_fun_result);
 
