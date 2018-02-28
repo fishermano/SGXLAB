@@ -643,10 +643,10 @@ CLEANUP:
     start heartbeat mechanism for the enclave, or no ecall function can be executed
   */
 
-  printf("\n***Heartbeat Functionality***\n");
+  printf("\n\n***Heartbeat Functionality***\n");
   ecall_start_heartbeat(global_eid, &status);
 
-  fprintf(OUTPUT, "\n\n\n***Starting Sealing Secrets Functionality***\n\n");
+  fprintf(OUTPUT, "\n\n***Starting Sealing Secrets Functionality***\n\n");
 
   /*
     define seal log parameters
@@ -700,6 +700,8 @@ CLEANUP:
 
   fprintf(OUTPUT, "\nSecrets sealed recovered from sealed_activity_log successfully\n");
 
+  fprintf(OUTPUT, "\n\n***Starting Key Request Functionality***\n");
+
   hcp = (hcp_samp_certificate_t *)malloc(sizeof(hcp_samp_certificate_t));
   memset(hcp, 0, sizeof(hcp_samp_certificate_t));
   hcp->id = 1;
@@ -734,8 +736,13 @@ CLEANUP:
     goto FINAL;
   }
 
-  fprintf(OUTPUT, "\nDevice keys loaded \n");
+  fprintf(OUTPUT, "\nDevice keys loaded in the enclave.\n");
 
+  fprintf(OUTPUT, "\n\n***Starting Data Request Functionality***\n");
+
+  fprintf(OUTPUT, "\nRequest data from the cloud storage.\n");
+
+  fprintf(OUTPUT, "\nDev0_0\n");
   ret = dr_network_send_receive("http://demo_testing.storage.cloud/", 0, 0, &dev_0_offset_0_data_resp);
 
   if(ret !=0 || !dev_0_offset_0_data_resp){
@@ -743,6 +750,7 @@ CLEANUP:
     fprintf(OUTPUT, "\nError, dev 0 offset 0 data retrieve failed [%s].", __FUNCTION__);
   }
 
+  fprintf(OUTPUT, "\nDev0_1\n");
   p_enc_dev_0_offset_0_data = (sp_aes_gcm_data_t*)((uint8_t*)dev_0_offset_0_data_resp + sizeof(du_samp_package_header_t));
 
   ret = dr_network_send_receive("http://demo_testing.storage.cloud/", 0, 1, &dev_0_offset_1_data_resp);
@@ -752,6 +760,7 @@ CLEANUP:
     fprintf(OUTPUT, "\nError, dev 0 offset 1 data retrieve failed [%s].", __FUNCTION__);
   }
 
+  fprintf(OUTPUT, "\nDev0_2\n");
   p_enc_dev_0_offset_1_data = (sp_aes_gcm_data_t*)((uint8_t*)dev_0_offset_1_data_resp + sizeof(du_samp_package_header_t));
 
   ret = dr_network_send_receive("http://demo_testing.storage.cloud/", 0, 2, &dev_0_offset_2_data_resp);
@@ -763,9 +772,7 @@ CLEANUP:
 
   p_enc_dev_0_offset_2_data = (sp_aes_gcm_data_t*)((uint8_t*)dev_0_offset_2_data_resp + sizeof(du_samp_package_header_t));
 
-  printf("\nEnclave perform functions over these data\n");
-
-  printf("\n***Perform Add Function Over Dev0_0, Dev0_1 and Dev0_2***\n");
+  printf("\n***Perform Statistics Function Over Dev0_0, Dev0_1***\n\n");
 
   clock_t start, end;
   double time;
@@ -781,42 +788,42 @@ CLEANUP:
   // average_time = sum_time / 100;
   // printf("\n average execution is: %lf\n", (average_time * 1000000));
 
-  int i, m;
-  for(m = 0; m < 100; m++){
-    result_temp = 0;
-    variance = 0.0;
-    mean = 0.0;
-    start = clock();
+  // int i, m;
+  // for(m = 0; m < 100; m++){
+  //   result_temp = 0;
+  //   variance = 0.0;
+  //   mean = 0.0;
+  //   start = clock();
+  //
+  //   for(i=0;i<8;i++){
+  //       result_temp = result_temp + evaluation_data_1[i];
+  //   }
+  //
+  //   for(i=0;i<8;i++){
+  //       // ocall_print_int(data_2->data[i]);
+  //       result_temp = result_temp + evaluation_data_2[i];
+  //   }
+  //   // ocall_print("\n##################################\n");
+  //
+  //   mean = (result_temp / 16);
+  //
+  //   for(i=0;i<8;i++){
+  //       variance = variance + ((evaluation_data_1[i] - mean) * (evaluation_data_1[i] - mean)) / (16 - 1);
+  //   }
+  //
+  //   for(i=0;i<8;i++){
+  //       variance = variance + ((evaluation_data_2[i] - mean) * (evaluation_data_2[i] - mean)) / (16 - 1);
+  //   }
+  //
+  //   end = clock();
+  //   time = (double)(end - start)/CLOCKS_PER_SEC;
+  //   sum_time = sum_time + time;
+  // }
+  // average_time = sum_time / 100;
+  // printf("\n mean: %d; variance: %d; average execution is: %lf\n", (int)mean, (int)variance, (average_time * 1000000));
 
-    for(i=0;i<8;i++){
-        result_temp = result_temp + evaluation_data_1[i];
-    }
 
-    for(i=0;i<8;i++){
-        // ocall_print_int(data_2->data[i]);
-        result_temp = result_temp + evaluation_data_2[i];
-    }
-    // ocall_print("\n##################################\n");
-
-    mean = (result_temp / 16);
-
-    for(i=0;i<8;i++){
-        variance = variance + ((evaluation_data_1[i] - mean) * (evaluation_data_1[i] - mean)) / (16 - 1);
-    }
-
-    for(i=0;i<8;i++){
-        variance = variance + ((evaluation_data_2[i] - mean) * (evaluation_data_2[i] - mean)) / (16 - 1);
-    }
-
-    end = clock();
-    time = (double)(end - start)/CLOCKS_PER_SEC;
-    sum_time = sum_time + time;
-  }
-  average_time = sum_time / 100;
-  printf("\n mean: %d; variance: %d; average execution is: %lf\n", (int)mean, (int)variance, (average_time * 1000000));
-
-
-  printf("\nThe final computation result returned from enclave is: %d\n", perform_sum_fun_result);
+  printf("\nthe final sum value returned from the enclave is: %d\n\n", perform_sum_fun_result);
 
 FINAL:
 

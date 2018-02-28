@@ -89,13 +89,13 @@ int sp_km_proc_key_req(const hcp_samp_certificate_t *p_req, kd_samp_package_head
     return -1;
   }
 
-  fprintf(stdout, "\nkey number: %d \n", p_key_set->key_num);
-  for(uint8_t i =0; i<p_key_set->key_num; i++){
-    for(uint8_t j = 0; j<16; j++){
-      fprintf(stdout, "key %d: %d\n", i, p_key_set->keys[i][j]);
-    }
-    fprintf(stdout, "*********************\n\n");
-  }
+  // fprintf(stdout, "\nassigned key number: %d \n", p_key_set->key_num);
+  // for(uint8_t i =0; i<p_key_set->key_num; i++){
+  //   for(uint8_t j = 0; j<16; j++){
+  //     fprintf(stdout, "key %d: %d\n", i, p_key_set->keys[i][j]);
+  //   }
+  //   fprintf(stdout, "*********************\n\n");
+  // }
 
   uint32_t key_set_size = (p_key_set->key_num * sizeof(sample_aes_gcm_128bit_key_t)) + sizeof(sp_samp_key_set_t);
 

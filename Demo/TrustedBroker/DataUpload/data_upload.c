@@ -85,21 +85,21 @@ int sp_upload_data(const char *cloud_storage_url, uint8_t dev_id, uint8_t offset
   if(0 == dev_id){
     memcpy(dev_key, dev_0.key, sizeof(dev_0.key));
   }else if(1 == dev_id){
-    memcpy(dev_key, dev_0.key, sizeof(dev_0.key));
+    memcpy(dev_key, dev_1.key, sizeof(dev_1.key));
   }else if(2 == dev_id){
-    memcpy(dev_key, dev_0.key, sizeof(dev_0.key));
+    memcpy(dev_key, dev_2.key, sizeof(dev_2.key));
   }else if(3 == dev_id){
-    memcpy(dev_key, dev_0.key, sizeof(dev_0.key));
+    memcpy(dev_key, dev_3.key, sizeof(dev_3.key));
   }
 
-  clock_t start, end;
-  double time;
-  double sum_time = 0.0;
-  double average_time = 0.0;
+  // clock_t start, end;
+  // double time;
+  // double sum_time = 0.0;
+  // double average_time = 0.0;
 
 
-  for(int m = 0; m < 100; m++){
-    start = clock();
+  // for(int m = 0; m < 100; m++){
+  //   start = clock();
     int ret = sample_rijndael128GCM_encrypt(&dev_key,
                 &p_dev_data->size,
                 dev_data_size,
@@ -113,12 +113,12 @@ int sp_upload_data(const char *cloud_storage_url, uint8_t dev_id, uint8_t offset
     //   fprintf(stderr, "\nError, data encryption in [%s].\n", __FUNCTION__);
     //   return -1;
     // }
-    end = clock();
-    time = (double)(end - start)/CLOCKS_PER_SEC;
-    sum_time = sum_time + time;
-  }
-  average_time = sum_time / 100;
-  printf("\n average encryption time is: %lf\n", (average_time * 1000000));
+  //   end = clock();
+  //   time = (double)(end - start)/CLOCKS_PER_SEC;
+  //   sum_time = sum_time + time;
+  // }
+  // average_time = sum_time / 100;
+  // printf("\n average encryption time is: %lf\n", (average_time * 1000000));
 
 
   p_encrypted_data->payload_size = dev_data_size;

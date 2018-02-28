@@ -9,7 +9,7 @@ extern key_set_t *device_keys;
 extern uint8_t hb_state;
 
 sgx_status_t ecall_put_keys(uint8_t *p_secret, uint32_t secret_size, uint8_t *p_gcm_mac){
-  ocall_print("testing enclave function: ecall_put_keys()");
+  ocall_print("\ntesting enclave function: ecall_put_keys()");
 
   if(STATUS_HB_ACTIVE != hb_state){
     ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
@@ -50,17 +50,16 @@ sgx_status_t ecall_put_keys(uint8_t *p_secret, uint32_t secret_size, uint8_t *p_
     // persistent storage for future use. This will prevents having to
     // perform remote attestation until the secret goes stale. Once the
     // enclave is created again, the secret can be unsealed.
-    ocall_print("\nDecrypted key set:\n");
+    ocall_print("decrypted key number:");
     ocall_print_int(device_keys->key_num);
-    ocall_print("\n");
 
-    uint32_t i,j;
-    for(i=0;i<device_keys->key_num;i++){
-      for(j=0;j<16;j++){
-        ocall_print_int(device_keys->device_keys[i][j]);
-      }
-      ocall_print("\n##################################\n");
-    }
+    // uint32_t i,j;
+    // for(i=0;i<device_keys->key_num;i++){
+    //   for(j=0;j<16;j++){
+    //     ocall_print_int(device_keys->device_keys[i][j]);
+    //   }
+    //   ocall_print("\n##################################\n");
+    // }
 
   }while(0);
 

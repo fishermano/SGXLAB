@@ -9,7 +9,7 @@ extern key_set_t *device_keys;
 extern uint8_t hb_state;
 
 sgx_status_t ecall_perform_statistics(uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1,  uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t *result){
-  ocall_print("testing enclave function: ecall_perform_fun_1()");
+  ocall_print("testing enclave function: ecall_perform_statistics()");
 
   float mean = 0.0;
   float variance = 0.0;
@@ -106,8 +106,9 @@ sgx_status_t ecall_perform_statistics(uint8_t* p_secret_1, uint32_t secret_size_
         variance = variance + ((data_2->data[i] - mean) * (data_2->data[i] - mean)) / (16 - 1);
     }
 
-
+    ocall_print("\nThe mean value:");
     ocall_print_int((int)mean);
+    ocall_print("\nThe variance value:");
     ocall_print_int((int)variance);
 
     // uint32_t i;
