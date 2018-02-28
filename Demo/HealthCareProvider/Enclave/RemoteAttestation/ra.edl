@@ -11,7 +11,7 @@ enclave{
 
     public sgx_status_t ecall_close_ra(sgx_ra_context_t context);
 
-    public sgx_status_t ecall_verify_att_result_mac(sgx_ra_context_t context, [in,size=message_size] uint8_t* message, size_t message_size, [in,size=mac_size] uint8_t* mac, size_t mac_size);
+    public sgx_status_t ecall_verify_result_mac(sgx_ra_context_t context, [in,size=message_size] uint8_t* message, size_t message_size, [in,size=mac_size] uint8_t* mac, size_t mac_size);
 
     public sgx_status_t ecall_put_secrets(sgx_ra_context_t context, [in,size=secret_size] uint8_t* p_secret, uint32_t secret_size, [in,count=16] uint8_t* gcm_mac);
   };

@@ -28,14 +28,14 @@ typedef struct ms_ecall_close_ra_t {
 	sgx_ra_context_t ms_context;
 } ms_ecall_close_ra_t;
 
-typedef struct ms_ecall_verify_att_result_mac_t {
+typedef struct ms_ecall_verify_result_mac_t {
 	sgx_status_t ms_retval;
 	sgx_ra_context_t ms_context;
 	uint8_t* ms_message;
 	size_t ms_message_size;
 	uint8_t* ms_mac;
 	size_t ms_mac_size;
-} ms_ecall_verify_att_result_mac_t;
+} ms_ecall_verify_result_mac_t;
 
 typedef struct ms_ecall_put_secrets_t {
 	sgx_status_t ms_retval;
@@ -96,7 +96,7 @@ typedef struct ms_ecall_end_heartbeat_t {
 	sgx_status_t ms_retval;
 } ms_ecall_end_heartbeat_t;
 
-typedef struct ms_ecall_perform_fun_t {
+typedef struct ms_ecall_perform_statistics_t {
 	sgx_status_t ms_retval;
 	uint8_t* ms_p_secret_1;
 	uint32_t ms_secret_size_1;
@@ -107,7 +107,7 @@ typedef struct ms_ecall_perform_fun_t {
 	uint8_t* ms_gcm_mac_2;
 	uint8_t ms_dev_id_2;
 	uint32_t* ms_result;
-} ms_ecall_perform_fun_t;
+} ms_ecall_perform_statistics_t;
 
 typedef struct ms_ocall_print_t {
 	char* ms_str;
@@ -220,10 +220,10 @@ static sgx_status_t SGX_CDECL sgx_ecall_close_ra(void* pms)
 	return status;
 }
 
-static sgx_status_t SGX_CDECL sgx_ecall_verify_att_result_mac(void* pms)
+static sgx_status_t SGX_CDECL sgx_ecall_verify_result_mac(void* pms)
 {
-	CHECK_REF_POINTER(pms, sizeof(ms_ecall_verify_att_result_mac_t));
-	ms_ecall_verify_att_result_mac_t* ms = SGX_CAST(ms_ecall_verify_att_result_mac_t*, pms);
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_verify_result_mac_t));
+	ms_ecall_verify_result_mac_t* ms = SGX_CAST(ms_ecall_verify_result_mac_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
 	uint8_t* _tmp_message = ms->ms_message;
 	size_t _tmp_message_size = ms->ms_message_size;
@@ -255,7 +255,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_verify_att_result_mac(void* pms)
 
 		memcpy(_in_mac, _tmp_mac, _len_mac);
 	}
-	ms->ms_retval = ecall_verify_att_result_mac(ms->ms_context, _in_message, _tmp_message_size, _in_mac, _tmp_mac_size);
+	ms->ms_retval = ecall_verify_result_mac(ms->ms_context, _in_message, _tmp_message_size, _in_mac, _tmp_mac_size);
 err:
 	if (_in_message) free(_in_message);
 	if (_in_mac) free(_in_mac);
@@ -573,10 +573,10 @@ static sgx_status_t SGX_CDECL sgx_ecall_end_heartbeat(void* pms)
 	return status;
 }
 
-static sgx_status_t SGX_CDECL sgx_ecall_perform_fun(void* pms)
+static sgx_status_t SGX_CDECL sgx_ecall_perform_statistics(void* pms)
 {
-	CHECK_REF_POINTER(pms, sizeof(ms_ecall_perform_fun_t));
-	ms_ecall_perform_fun_t* ms = SGX_CAST(ms_ecall_perform_fun_t*, pms);
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_perform_statistics_t));
+	ms_ecall_perform_statistics_t* ms = SGX_CAST(ms_ecall_perform_statistics_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
 	uint8_t* _tmp_p_secret_1 = ms->ms_p_secret_1;
 	uint32_t _tmp_secret_size_1 = ms->ms_secret_size_1;
@@ -658,7 +658,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_perform_fun(void* pms)
 
 		memset((void*)_in_result, 0, _len_result);
 	}
-	ms->ms_retval = ecall_perform_fun(_in_p_secret_1, _tmp_secret_size_1, _in_gcm_mac_1, ms->ms_dev_id_1, _in_p_secret_2, _tmp_secret_size_2, _in_gcm_mac_2, ms->ms_dev_id_2, _in_result);
+	ms->ms_retval = ecall_perform_statistics(_in_p_secret_1, _tmp_secret_size_1, _in_gcm_mac_1, ms->ms_dev_id_1, _in_p_secret_2, _tmp_secret_size_2, _in_gcm_mac_2, ms->ms_dev_id_2, _in_result);
 err:
 	if (_in_p_secret_1) free(_in_p_secret_1);
 	if (_in_gcm_mac_1) free(_in_gcm_mac_1);
@@ -680,7 +680,7 @@ SGX_EXTERNC const struct {
 	{
 		{(void*)(uintptr_t)sgx_ecall_init_ra, 0},
 		{(void*)(uintptr_t)sgx_ecall_close_ra, 0},
-		{(void*)(uintptr_t)sgx_ecall_verify_att_result_mac, 0},
+		{(void*)(uintptr_t)sgx_ecall_verify_result_mac, 0},
 		{(void*)(uintptr_t)sgx_ecall_put_secrets, 0},
 		{(void*)(uintptr_t)sgx_sgx_ra_get_ga, 0},
 		{(void*)(uintptr_t)sgx_sgx_ra_proc_msg2_trusted, 0},
@@ -690,7 +690,7 @@ SGX_EXTERNC const struct {
 		{(void*)(uintptr_t)sgx_ecall_put_keys, 0},
 		{(void*)(uintptr_t)sgx_ecall_start_heartbeat, 0},
 		{(void*)(uintptr_t)sgx_ecall_end_heartbeat, 0},
-		{(void*)(uintptr_t)sgx_ecall_perform_fun, 0},
+		{(void*)(uintptr_t)sgx_ecall_perform_statistics, 0},
 	}
 };
 

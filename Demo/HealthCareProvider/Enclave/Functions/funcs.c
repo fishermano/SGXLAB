@@ -5,22 +5,22 @@
 #include "../demo_enclave.h"
 #include "../demo_enclave_t.h"
 
-extern key_set_t *p_key_set;
-extern uint8_t hb_active;
+extern key_set_t *device_keys;
+extern uint8_t hb_state;
 
-sgx_status_t ecall_perform_fun(uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1,  uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t *result){
+sgx_status_t ecall_perform_statistics(uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1,  uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t *result){
   ocall_print("testing enclave function: ecall_perform_fun_1()");
 
   float mean = 0.0;
   float variance = 0.0;
 
-  if(STATUS_HB_ACTIVE != hb_active){
+  if(STATUS_HB_ACTIVE != hb_state){
     ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
 
     return SGX_ERROR_UNEXPECTED;
   }
 
-  if(NULL == p_key_set){
+  if(NULL == device_keys){
     ocall_print("\ncurrent key set is null, keys can be requested or uncovered from second storage\n");
 
     return SGX_ERROR_SERVICE_UNAVAILABLE;
@@ -33,31 +33,31 @@ sgx_status_t ecall_perform_fun(uint8_t* p_secret_1, uint32_t secret_size_1, uint
 
   switch (dev_id_1){
     case 0:
-      memcpy(&secret_key_1[0], p_key_set->device_keys[0], 16);
+      memcpy(&secret_key_1[0], device_keys->device_keys[0], 16);
       break;
     case 1:
-      memcpy(&secret_key_1[1], p_key_set->device_keys[1], 16);
+      memcpy(&secret_key_1[1], device_keys->device_keys[1], 16);
       break;
     case 2:
-      memcpy(&secret_key_1[2], p_key_set->device_keys[2], 16);
+      memcpy(&secret_key_1[2], device_keys->device_keys[2], 16);
       break;
     case 3:
-      memcpy(&secret_key_1[3], p_key_set->device_keys[3], 16);
+      memcpy(&secret_key_1[3], device_keys->device_keys[3], 16);
       break;
   }
 
   switch (dev_id_2){
     case 0:
-      memcpy(&secret_key_2[0], p_key_set->device_keys[0], 16);
+      memcpy(&secret_key_2[0], device_keys->device_keys[0], 16);
       break;
     case 1:
-      memcpy(&secret_key_2[1], p_key_set->device_keys[1], 16);
+      memcpy(&secret_key_2[1], device_keys->device_keys[1], 16);
       break;
     case 2:
-      memcpy(&secret_key_2[2], p_key_set->device_keys[2], 16);
+      memcpy(&secret_key_2[2], device_keys->device_keys[2], 16);
       break;
     case 3:
-      memcpy(&secret_key_2[3], p_key_set->device_keys[3], 16);
+      memcpy(&secret_key_2[3], device_keys->device_keys[3], 16);
       break;
   }
 

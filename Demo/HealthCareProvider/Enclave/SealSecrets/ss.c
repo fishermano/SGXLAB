@@ -26,14 +26,13 @@ typedef struct _replay_protected_pay_load
     activity_log log;
 }replay_protected_pay_load;
 
-extern uint8_t secret_share_key[16];
-extern uint8_t device_keys[DEVICE_KEY_MAX_NUM][8];
-extern uint8_t hb_active;
+extern uint8_t shared_key[16];
+extern uint8_t hb_state;
 
 // Used to store the secret recovered from the outside. The
 // size is forced to be 8 bytes. Expected value is
 // 0x01,0x02,0x03,0x04,0x0x5,0x0x6,0x0x7
-extern uint8_t u_secret_share_key[16];
+extern uint8_t u_shared_key[16];
 
 static sgx_status_t verify_mc(replay_protected_pay_load* data2verify)
 {
@@ -119,7 +118,7 @@ static sgx_status_t verify_sealed_data(
 sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log_size){
   ocall_print("testing enclave function: ecall_create_sealed_policy()");
 
-  if(STATUS_HB_ACTIVE != hb_active){
+  if(STATUS_HB_ACTIVE != hb_state){
     ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
 
     return SGX_ERROR_UNEXPECTED;
@@ -179,8 +178,8 @@ sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log
     //     break;
     // }
 
-    memcpy(data2seal.secret, secret_share_key, sizeof(secret_share_key));
-    data2seal.secret_size = sizeof(secret_share_key);
+    memcpy(data2seal.secret, shared_key, sizeof(shared_key));
+    data2seal.secret_size = sizeof(shared_key);
 
     data2seal.log.release_version = 0;
     /* the secret can be updated for 5 times */
@@ -193,7 +192,7 @@ sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log
         sealed_log_size, (sgx_sealed_data_t*)sealed_log);
   } while (0);
 
-  memset(&secret_share_key, 0, sizeof(secret_share_key));
+  memset(&shared_key, 0, sizeof(shared_key));
   memset(&data2seal, 0, sizeof(replay_protected_pay_load));
 
   sgx_close_pse_session();
@@ -204,7 +203,7 @@ sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log
 sgx_status_t ecall_perform_sealed_policy(const uint8_t* sealed_log, uint32_t sealed_log_size){
   ocall_print("testing enclave function: ecall_perform_sealed_policy()");
 
-  if(STATUS_HB_ACTIVE != hb_active){
+  if(STATUS_HB_ACTIVE != hb_state){
     ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
 
     return SGX_ERROR_UNEXPECTED;
@@ -237,11 +236,11 @@ sgx_status_t ecall_perform_sealed_policy(const uint8_t* sealed_log, uint32_t sea
 
   sgx_close_pse_session();
 
-  memcpy(u_secret_share_key, data_unsealed.secret, data_unsealed.secret_size);
+  memcpy(u_shared_key, data_unsealed.secret, data_unsealed.secret_size);
 
   uint32_t i;
-  for(i=0;i<sizeof(u_secret_share_key);i++){
-      ocall_print_int(u_secret_share_key[i]);
+  for(i=0;i<sizeof(u_shared_key);i++){
+      ocall_print_int(u_shared_key[i]);
   }
 
   /* remember to clear secret data after been used by memset_s */

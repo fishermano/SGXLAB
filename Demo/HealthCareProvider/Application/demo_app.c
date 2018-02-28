@@ -575,7 +575,7 @@ int SGX_CDECL main(int argc, char *argv[]){
     // The format of the attestation result message is demo_app specific.
     // This is a simple form for demonstration. In a real product,
     // the demo_app may want to communicate more information.
-    ret = ecall_verify_att_result_mac(global_eid, &status, context, (uint8_t*)&p_att_result_msg_body->platform_info_blob, sizeof(ias_platform_info_blob_t), (uint8_t*)&p_att_result_msg_body->mac, sizeof(sgx_mac_t));
+    ret = ecall_verify_result_mac(global_eid, &status, context, (uint8_t*)&p_att_result_msg_body->platform_info_blob, sizeof(ias_platform_info_blob_t), (uint8_t*)&p_att_result_msg_body->mac, sizeof(sgx_mac_t));
 
     if((SGX_SUCCESS != ret) || (SGX_SUCCESS != status)) {
       ret = -1;
@@ -773,7 +773,7 @@ CLEANUP:
 
   // for(int m = 0; m < 100; m++){
   //   start = clock();
-    ret = ecall_perform_fun(global_eid, &status, p_enc_dev_0_offset_0_data->payload, p_enc_dev_0_offset_0_data->payload_size, p_enc_dev_0_offset_0_data->payload_tag, 0,  p_enc_dev_0_offset_1_data->payload, p_enc_dev_0_offset_1_data->payload_size, p_enc_dev_0_offset_1_data->payload_tag, 0, &perform_sum_fun_result);
+    ret = ecall_perform_statistics(global_eid, &status, p_enc_dev_0_offset_0_data->payload, p_enc_dev_0_offset_0_data->payload_size, p_enc_dev_0_offset_0_data->payload_tag, 0,  p_enc_dev_0_offset_1_data->payload, p_enc_dev_0_offset_1_data->payload_size, p_enc_dev_0_offset_1_data->payload_tag, 0, &perform_sum_fun_result);
     // end = clock();
     // time = (double)(end - start)/CLOCKS_PER_SEC;
     // sum_time = sum_time + time;

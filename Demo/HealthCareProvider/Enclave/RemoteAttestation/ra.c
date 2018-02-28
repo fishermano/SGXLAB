@@ -35,7 +35,7 @@ static const sgx_ec256_public_t g_sp_pub_key = {
 // size is forced to be 8 bytes. Expected value is
 // 0x01,0x02,0x03,0x04,0x0x5,0x0x6,0x0x7
 //extern uint8_t secret_share_key[8];
-extern uint8_t secret_share_key[16];
+extern uint8_t shared_key[16];
 
 #ifdef SUPPLIED_KEY_DERIVATION
 
@@ -256,7 +256,7 @@ sgx_status_t SGXAPI ecall_close_ra(sgx_ra_context_t context){
 // @return Any error produced by tKE  API to get SK key.
 // @return Any error produced by the AESCMAC function.
 // @return SGX_ERROR_MAC_MISMATCH - MAC compare fails.
-sgx_status_t ecall_verify_att_result_mac(sgx_ra_context_t context, uint8_t* p_message, size_t message_size, uint8_t* p_mac, size_t mac_size){
+sgx_status_t ecall_verify_result_mac(sgx_ra_context_t context, uint8_t* p_message, size_t message_size, uint8_t* p_mac, size_t mac_size){
   ocall_print("testing enclave function: ecall_verify_att_result_mac()");
 
   sgx_status_t ret;
@@ -326,7 +326,7 @@ sgx_status_t ecall_put_secrets(sgx_ra_context_t context, uint8_t *p_secret, uint
     }
 
     uint8_t aes_gcm_iv[12] = {0};
-    ret = sgx_rijndael128GCM_decrypt(&sk_key, p_secret, secret_size, &secret_share_key[0], &aes_gcm_iv[0], 12, NULL, 0, (const sgx_aes_gcm_128bit_tag_t *)(p_gcm_mac));
+    ret = sgx_rijndael128GCM_decrypt(&sk_key, p_secret, secret_size, &shared_key[0], &aes_gcm_iv[0], 12, NULL, 0, (const sgx_aes_gcm_128bit_tag_t *)(p_gcm_mac));
 
     // uint32_t i;
     // bool secret_match = true;
