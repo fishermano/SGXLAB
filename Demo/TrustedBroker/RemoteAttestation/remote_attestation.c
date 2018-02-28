@@ -39,6 +39,8 @@
 
 #include "sample_libcrypto.h"
 
+#include "key_management.h"
+
 #include "ecp.h"
 
 //#include "ias_ra.h"
@@ -106,7 +108,8 @@ static int g_sp_credentials = 0;
 static int g_authentication_token = 0;
 
 //uint8_t g_secret[8] = {0,1,2,3,4,5,6,7};
-extern sample_aes_gcm_128bit_key_t secret_share_key;
+//extern sample_aes_gcm_128bit_key_t secret_share_key;
+extern sp_samp_ssk_t hcp_0;
 
 sample_spid_t g_spid;
 
@@ -604,7 +607,7 @@ int sp_ra_proc_msg3_req(const sample_ra_msg3_t *p_msg3,
         uint32_t att_result_msg_size = sizeof(sample_ra_att_result_msg_t);
         p_att_result_msg_full =
             (ra_samp_response_header_t*)malloc(att_result_msg_size
-            + sizeof(ra_samp_response_header_t) + sizeof(secret_share_key));
+            + sizeof(ra_samp_response_header_t) + sizeof(hcp_0.key));
         if(!p_att_result_msg_full)
         {
             fprintf(stderr, "\nError, out of memory in [%s].", __FUNCTION__);
@@ -612,7 +615,7 @@ int sp_ra_proc_msg3_req(const sample_ra_msg3_t *p_msg3,
             break;
         }
         memset(p_att_result_msg_full, 0, att_result_msg_size
-               + sizeof(ra_samp_response_header_t) + sizeof(secret_share_key));
+               + sizeof(ra_samp_response_header_t) + sizeof(hcp_0.key));
         p_att_result_msg_full->type = TYPE_RA_ATT_RESULT;
         p_att_result_msg_full->size = att_result_msg_size;
         if(IAS_QUOTE_OK != attestation_report.status)
@@ -709,7 +712,7 @@ int sp_ra_proc_msg3_req(const sample_ra_msg3_t *p_msg3,
            (isv_policy_passed == true))
         {
             ret = sample_rijndael128GCM_encrypt(&g_sp_db.sk_key,
-                        &secret_share_key[0],
+                        &hcp_0.key[0],
                         p_att_result_msg->secret.payload_size,
                         p_att_result_msg->secret.payload,
                         &aes_gcm_iv[0],

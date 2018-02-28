@@ -4,43 +4,52 @@
 #include <time.h>
 
 #include "data_upload.h"
+
 #include "remote_attestation_result.h" //for encrypted data format sp_aes_gcm_data_t
 #include "sample_libcrypto.h"
 
-#include "sample_dev_data.h"
+#include "data_sample.h"
+
+#include "key_management.h"
+
+// #include "sample_dev_data.h"
 
 #define SAMPLE_SP_IV_SIZE        12
 
-extern sample_aes_gcm_128bit_key_t d_key1;
-extern sample_aes_gcm_128bit_key_t d_key2;
-extern sample_aes_gcm_128bit_key_t d_key3;
-extern sample_aes_gcm_128bit_key_t d_key4;
+// extern sample_aes_gcm_128bit_key_t d_key1;
+// extern sample_aes_gcm_128bit_key_t d_key2;
+// extern sample_aes_gcm_128bit_key_t d_key3;
+// extern sample_aes_gcm_128bit_key_t d_key4;
+extern sp_samp_dev_key_t dev_0;
+extern sp_samp_dev_key_t dev_1;
+extern sp_samp_dev_key_t dev_2;
+extern sp_samp_dev_key_t dev_3;
 
-int data_retrieve(uint8_t dev_id, uint8_t offset, sp_samp_dev_data_t **pp_dev_data){
-
-  sp_samp_dev_data_t *dev_data = NULL;
-
-  dev_data = (sp_samp_dev_data_t *)malloc(sizeof(sp_samp_dev_data_t) + DATA_UPLOAD_SIZE);
-  if(NULL == dev_data){
-    fprintf(stderr, "\nError, out of memory in [%s].", __FUNCTION__);
-    return -1;
-  }
-  memset(dev_data, 0, sizeof(sp_samp_dev_data_t) + DATA_UPLOAD_SIZE);
-
-  dev_data->size = DATA_UPLOAD_SIZE;
-
-  if(0 == offset){
-    memcpy(dev_data->data, &dev_0_data_sample_0[0], sizeof(dev_0_data_sample_0));
-  }else if(1 == offset){
-    memcpy(dev_data->data, &dev_0_data_sample_1[0], sizeof(dev_0_data_sample_0));
-  }else if(2 == offset){
-    memcpy(dev_data->data, &dev_0_data_sample_2[0], sizeof(dev_0_data_sample_0));
-  }
-
-  *pp_dev_data = dev_data;
-
-  return 0;
-}
+// int data_retrieve(uint8_t dev_id, uint8_t offset, sp_samp_dev_data_t **pp_dev_data){
+//
+//   sp_samp_dev_data_t *dev_data = NULL;
+//
+//   dev_data = (sp_samp_dev_data_t *)malloc(sizeof(sp_samp_dev_data_t) + DATA_UPLOAD_SIZE);
+//   if(NULL == dev_data){
+//     fprintf(stderr, "\nError, out of memory in [%s].", __FUNCTION__);
+//     return -1;
+//   }
+//   memset(dev_data, 0, sizeof(sp_samp_dev_data_t) + DATA_UPLOAD_SIZE);
+//
+//   dev_data->size = DATA_UPLOAD_SIZE;
+//
+//   if(0 == offset){
+//     memcpy(dev_data->data, &dev_0_data_sample_0[0], sizeof(dev_0_data_sample_0));
+//   }else if(1 == offset){
+//     memcpy(dev_data->data, &dev_0_data_sample_1[0], sizeof(dev_0_data_sample_0));
+//   }else if(2 == offset){
+//     memcpy(dev_data->data, &dev_0_data_sample_2[0], sizeof(dev_0_data_sample_0));
+//   }
+//
+//   *pp_dev_data = dev_data;
+//
+//   return 0;
+// }
 
 int sp_upload_data(const char *cloud_storage_url, uint8_t dev_id, uint8_t offset, du_samp_package_header_t **response){
 
@@ -52,7 +61,7 @@ int sp_upload_data(const char *cloud_storage_url, uint8_t dev_id, uint8_t offset
   /*
     deliver DATA_UPLOAD_SIZE(8) bytes data of device id to public cloud
   */
-  if(0 != data_retrieve(dev_id, offset, &p_dev_data)){
+  if(0 != data_send(dev_id, offset, &p_dev_data)){
     return -1;
   }
 
@@ -74,13 +83,13 @@ int sp_upload_data(const char *cloud_storage_url, uint8_t dev_id, uint8_t offset
 
   sample_aes_gcm_128bit_key_t dev_key = {0};
   if(0 == dev_id){
-    memcpy(&dev_key, &d_key1, sizeof(d_key1));
+    memcpy(dev_key, dev_0.key, sizeof(dev_0.key));
   }else if(1 == dev_id){
-    memcpy(&dev_key, &d_key2, sizeof(d_key1));
+    memcpy(dev_key, dev_0.key, sizeof(dev_0.key));
   }else if(2 == dev_id){
-    memcpy(&dev_key, &d_key3, sizeof(d_key1));
+    memcpy(dev_key, dev_0.key, sizeof(dev_0.key));
   }else if(3 == dev_id){
-    memcpy(&dev_key, &d_key4, sizeof(d_key1));
+    memcpy(dev_key, dev_0.key, sizeof(dev_0.key));
   }
 
   clock_t start, end;

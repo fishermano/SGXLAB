@@ -4,23 +4,38 @@
 
 #include "key_management.h"
 #include "remote_attestation_result.h"
+#include "policy_management.h"
 
 #define SAMPLE_SP_IV_SIZE        12
 
-extern sample_aes_gcm_128bit_key_t secret_share_key;
-extern sample_aes_gcm_128bit_key_t d_key1;
-extern sample_aes_gcm_128bit_key_t d_key2;
-extern sample_aes_gcm_128bit_key_t d_key3;
-extern sample_aes_gcm_128bit_key_t d_key4;
+// extern sample_aes_gcm_128bit_key_t secret_share_key;
+// extern sample_aes_gcm_128bit_key_t d_key1;
+// extern sample_aes_gcm_128bit_key_t d_key2;
+// extern sample_aes_gcm_128bit_key_t d_key3;
+// extern sample_aes_gcm_128bit_key_t d_key4;
+extern sp_samp_ssk_t hcp_0;
 
-int cert_check(){
+extern sp_samp_dev_key_t dev_0;
+extern sp_samp_dev_key_t dev_1;
+extern sp_samp_dev_key_t dev_2;
+extern sp_samp_dev_key_t dev_3;
+
+
+int request_check(){
   return 0;
 }
 
-int key_retrieve(uint8_t hcp_id, sp_samp_key_set_t **pp_key_set){
+int key_access(uint8_t hcp_id, sp_samp_key_set_t **pp_key_set){
+
+  sp_samp_access_rule_t *p_access_rule = NULL;
+
+  if(0 != policy_access(hcp_id, &p_access_rule)){
+    return -1;
+  }
+
 
   sp_samp_key_set_t *key_set = NULL;
-  uint8_t key_num = 4;
+  uint8_t key_num = p_access_rule->dev_num;
 
   uint32_t key_size = key_num * sizeof(sample_aes_gcm_128bit_key_t);
   key_set = (sp_samp_key_set_t *)malloc(sizeof(sp_samp_key_set_t) + key_size);
@@ -31,17 +46,27 @@ int key_retrieve(uint8_t hcp_id, sp_samp_key_set_t **pp_key_set){
   memset(key_set, 0, sizeof(sp_samp_key_set_t) + key_size);
 
   key_set->key_num = key_num;
-  memcpy(key_set->keys[0], d_key1, sizeof(d_key1));
-  memcpy(key_set->keys[1], d_key2, sizeof(d_key2));
-  memcpy(key_set->keys[2], d_key3, sizeof(d_key3));
-  memcpy(key_set->keys[3], d_key4, sizeof(d_key4));
+  for(uint8_t r =0; r < key_num; r++){
+    if(0 == p_access_rule->dev_list[r]){
+      memcpy(key_set->keys[r], dev_0.key, sizeof(dev_0.key));
+    }else if(1 == p_access_rule->dev_list[r]){
+      memcpy(key_set->keys[r], dev_1.key, sizeof(dev_1.key));
+    }else if(2 == p_access_rule->dev_list[r]){
+      memcpy(key_set->keys[r], dev_2.key, sizeof(dev_2.key));
+    }else if(3 == p_access_rule->dev_list[r]){
+      memcpy(key_set->keys[r], dev_3.key, sizeof(dev_3.key));
+    }
+    else if(4 == p_access_rule->dev_list[r]){
+
+    }
+  }
 
   *pp_key_set = key_set;
 
   return 0;
 }
 
-int sp_km_proc_key_req(const hcp_samp_certificate_t *p_cert, kd_samp_package_header_t **response){
+int sp_km_proc_key_req(const hcp_samp_certificate_t *p_req, kd_samp_package_header_t **response){
 
   kd_samp_package_header_t *p_resp = NULL;
   sp_aes_gcm_data_t *p_encrypted_keys = NULL;
@@ -49,18 +74,18 @@ int sp_km_proc_key_req(const hcp_samp_certificate_t *p_cert, kd_samp_package_hea
 
 
   /*
-    check p_cert to judge whether it is a legal health care provider
+    check p_req to judge whether it is a legal health care provider
   */
 
-  if(0 != cert_check()){
+  if(0 != request_check()){
     return -1;
   }
 
   /*
     deliver granted device keys to demo_app
   */
-  uint8_t hcp_id = 1;
-  if(0 != key_retrieve(hcp_id, &p_key_set)){
+  uint8_t hcp_id = 0;
+  if(0 != key_access(hcp_id, &p_key_set)){
     return -1;
   }
 
@@ -81,7 +106,7 @@ int sp_km_proc_key_req(const hcp_samp_certificate_t *p_cert, kd_samp_package_hea
     fprintf(stderr, "\nError, out of memory in [%s].\n", __FUNCTION__);
     return -1;
   }
-  int ret = sample_rijndael128GCM_encrypt(&secret_share_key,
+  int ret = sample_rijndael128GCM_encrypt(&hcp_0.key,
               &p_key_set->key_num,
               key_set_size,
               p_encrypted_keys->payload,
