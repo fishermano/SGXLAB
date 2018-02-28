@@ -27,14 +27,19 @@ int sp_heart_beat_loop(hb_samp_package_header_t **response){
   sp_aes_gcm_data_t *p_encrypted_data = NULL;
   sp_samp_heartbeat_data_t *p_heartbeat_data = NULL;
 
+  p_heartbeat_data = (sp_samp_heartbeat_data_t *)malloc(sizeof(sp_samp_heartbeat_data_t));
+  if(NULL == p_heartbeat_data){
+    fprintf(stderr, "\nError, out of memory in [%s].", __FUNCTION__);
+    return -1;
+  }
+
   p_heartbeat_data->counter = counter();
   p_heartbeat_data->is_revoked = 0;
-  if(p_heartbeat_data->counter == REVOKED_THRESHOLD){
+  if(p_heartbeat_data->counter >= REVOKED_THRESHOLD){
     p_heartbeat_data->is_revoked = 1;
   }
 
-  fprintf(stdout, "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-  fprintf(stdout, "\ncurrent heartbeat counter: %d \n", p_heartbeat_data->counter);
+  fprintf(stdout, "\ncurrent sending heartbeat counter: %d \n", p_heartbeat_data->counter);
 
   uint32_t heartbeat_data_size = sizeof(sp_samp_heartbeat_data_t);
 

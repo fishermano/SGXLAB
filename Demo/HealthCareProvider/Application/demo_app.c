@@ -174,6 +174,9 @@ int SGX_CDECL main(int argc, char *argv[]){
   sgx_ra_msg3_t *p_msg3 = NULL;
   ra_samp_response_header_t *p_att_result_msg_full = NULL;
 
+  hb_samp_package_header_t *hb_resp = NULL;
+  sp_aes_gcm_data_t *p_enc_hb = NULL;
+
   kd_samp_package_header_t *key_req = NULL;
   kd_samp_package_header_t *key_resp = NULL;
   hcp_samp_certificate_t * hcp = NULL;
@@ -639,13 +642,6 @@ CLEANUP:
     fprintf(OUTPUT, "\nCall ecall_close_ra() success.");
   }
 
-  /*
-    start heartbeat mechanism for the enclave, or no ecall function can be executed
-  */
-
-  printf("\n\n***Heartbeat Functionality***\n");
-  ecall_start_heartbeat(global_eid, &status);
-
   fprintf(OUTPUT, "\n\n***Starting Sealing Secrets Functionality***\n\n");
 
   /*
@@ -699,6 +695,34 @@ CLEANUP:
   }
 
   fprintf(OUTPUT, "\nSecrets sealed recovered from sealed_activity_log successfully\n");
+
+  /*
+    start heartbeat mechanism for the enclave, or no ecall function can be executed
+  */
+
+  printf("\n\n***Starting Heartbeat Functionality***\n");
+  // ecall_start_heartbeat(global_eid, &status);
+
+  for(int i = 0; i < 20; i++){
+
+    ret = hb_network_send_receive("http://demo_testing.cnsr.vt.edu/", &hb_resp);
+
+    if(ret !=0 || !hb_resp){
+      ret = -1;
+      fprintf(OUTPUT, "\nError, receiving heartbeat signal failed [%s].", __FUNCTION__);
+    }
+
+    p_enc_hb = (sp_aes_gcm_data_t*)((uint8_t*)hb_resp + sizeof(hb_samp_package_header_t));
+
+    ret = ecall_heartbeat_process(global_eid, &status, p_enc_hb->payload, p_enc_hb->payload_size, p_enc_hb->payload_tag);
+    if((SGX_SUCCESS != ret) || (SGX_SUCCESS != status)){
+      fprintf(OUTPUT, "\nError, decrypted heartbeat using secret_share_key based AESGCM failed in [%s]. ret = 0x%0x. status = 0x%0x", __FUNCTION__, ret, status);
+      goto FINAL;
+    }
+
+    sleep(2);
+
+  }
 
   fprintf(OUTPUT, "\n\n***Starting Key Request Functionality***\n");
 
@@ -774,8 +798,8 @@ CLEANUP:
 
   printf("\n***Perform Statistics Function Over Dev0_0, Dev0_1***\n\n");
 
-  clock_t start, end;
-  double time;
+  // clock_t start, end;
+  // double time;
 
 
   // for(int m = 0; m < 100; m++){
@@ -830,7 +854,7 @@ FINAL:
   /*
     when an encalve is stoped, you need end hearbeat mechanism exploitly by revoking ecall_end_heartbeat()
   */
-  ecall_end_heartbeat(global_eid, &status);
+  // ecall_end_heartbeat(global_eid, &status);
 
   sgx_destroy_enclave(global_eid);
 

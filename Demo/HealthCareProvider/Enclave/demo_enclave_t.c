@@ -88,13 +88,12 @@ typedef struct ms_ecall_put_keys_t {
 	uint8_t* ms_gcm_mac;
 } ms_ecall_put_keys_t;
 
-typedef struct ms_ecall_start_heartbeat_t {
+typedef struct ms_ecall_heartbeat_process_t {
 	sgx_status_t ms_retval;
-} ms_ecall_start_heartbeat_t;
-
-typedef struct ms_ecall_end_heartbeat_t {
-	sgx_status_t ms_retval;
-} ms_ecall_end_heartbeat_t;
+	uint8_t* ms_p_hb;
+	uint32_t ms_hb_size;
+	uint8_t* ms_gcm_hb_mac;
+} ms_ecall_heartbeat_process_t;
 
 typedef struct ms_ecall_perform_statistics_t {
 	sgx_status_t ms_retval;
@@ -547,28 +546,50 @@ err:
 	return status;
 }
 
-static sgx_status_t SGX_CDECL sgx_ecall_start_heartbeat(void* pms)
+static sgx_status_t SGX_CDECL sgx_ecall_heartbeat_process(void* pms)
 {
-	CHECK_REF_POINTER(pms, sizeof(ms_ecall_start_heartbeat_t));
-	ms_ecall_start_heartbeat_t* ms = SGX_CAST(ms_ecall_start_heartbeat_t*, pms);
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_heartbeat_process_t));
+	ms_ecall_heartbeat_process_t* ms = SGX_CAST(ms_ecall_heartbeat_process_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
+	uint8_t* _tmp_p_hb = ms->ms_p_hb;
+	uint32_t _tmp_hb_size = ms->ms_hb_size;
+	size_t _len_p_hb = _tmp_hb_size;
+	uint8_t* _in_p_hb = NULL;
+	uint8_t* _tmp_gcm_hb_mac = ms->ms_gcm_hb_mac;
+	size_t _len_gcm_hb_mac = 16 * sizeof(*_tmp_gcm_hb_mac);
+	uint8_t* _in_gcm_hb_mac = NULL;
 
+	if (sizeof(*_tmp_gcm_hb_mac) != 0 &&
+		16 > (SIZE_MAX / sizeof(*_tmp_gcm_hb_mac))) {
+		status = SGX_ERROR_INVALID_PARAMETER;
+		goto err;
+	}
 
-	ms->ms_retval = ecall_start_heartbeat();
+	CHECK_UNIQUE_POINTER(_tmp_p_hb, _len_p_hb);
+	CHECK_UNIQUE_POINTER(_tmp_gcm_hb_mac, _len_gcm_hb_mac);
 
+	if (_tmp_p_hb != NULL && _len_p_hb != 0) {
+		_in_p_hb = (uint8_t*)malloc(_len_p_hb);
+		if (_in_p_hb == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
 
-	return status;
-}
+		memcpy(_in_p_hb, _tmp_p_hb, _len_p_hb);
+	}
+	if (_tmp_gcm_hb_mac != NULL && _len_gcm_hb_mac != 0) {
+		_in_gcm_hb_mac = (uint8_t*)malloc(_len_gcm_hb_mac);
+		if (_in_gcm_hb_mac == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
 
-static sgx_status_t SGX_CDECL sgx_ecall_end_heartbeat(void* pms)
-{
-	CHECK_REF_POINTER(pms, sizeof(ms_ecall_end_heartbeat_t));
-	ms_ecall_end_heartbeat_t* ms = SGX_CAST(ms_ecall_end_heartbeat_t*, pms);
-	sgx_status_t status = SGX_SUCCESS;
-
-
-	ms->ms_retval = ecall_end_heartbeat();
-
+		memcpy(_in_gcm_hb_mac, _tmp_gcm_hb_mac, _len_gcm_hb_mac);
+	}
+	ms->ms_retval = ecall_heartbeat_process(_in_p_hb, _tmp_hb_size, _in_gcm_hb_mac);
+err:
+	if (_in_p_hb) free(_in_p_hb);
+	if (_in_gcm_hb_mac) free(_in_gcm_hb_mac);
 
 	return status;
 }
@@ -674,9 +695,9 @@ err:
 
 SGX_EXTERNC const struct {
 	size_t nr_ecall;
-	struct {void* ecall_addr; uint8_t is_priv;} ecall_table[13];
+	struct {void* ecall_addr; uint8_t is_priv;} ecall_table[12];
 } g_ecall_table = {
-	13,
+	12,
 	{
 		{(void*)(uintptr_t)sgx_ecall_init_ra, 0},
 		{(void*)(uintptr_t)sgx_ecall_close_ra, 0},
@@ -688,29 +709,28 @@ SGX_EXTERNC const struct {
 		{(void*)(uintptr_t)sgx_ecall_create_sealed_policy, 0},
 		{(void*)(uintptr_t)sgx_ecall_perform_sealed_policy, 0},
 		{(void*)(uintptr_t)sgx_ecall_put_keys, 0},
-		{(void*)(uintptr_t)sgx_ecall_start_heartbeat, 0},
-		{(void*)(uintptr_t)sgx_ecall_end_heartbeat, 0},
+		{(void*)(uintptr_t)sgx_ecall_heartbeat_process, 0},
 		{(void*)(uintptr_t)sgx_ecall_perform_statistics, 0},
 	}
 };
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[11][13];
+	uint8_t entry_table[11][12];
 } g_dyn_entry_table = {
 	11,
 	{
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
 	}
 };
 

@@ -6,6 +6,7 @@
 #include "ThirdPartyLibrary/remote_attestation.h"
 #include "ThirdPartyLibrary/key_management.h"
 #include "ThirdPartyLibrary/data_upload.h"
+#include "ThirdPartyLibrary/heartbeat.h"
 
 // Some utility functions to output some of the data structures passed between
 // the app and the trusted broker.
@@ -196,6 +197,31 @@ int dr_network_send_receive(const char *server_url, const uint8_t dev_id, const 
   if(0 != ret)
   {
       fprintf(stderr, "\nError, call sp_upload_data fail [%s].",
+          __FUNCTION__);
+  }
+  else
+  {
+      *p_resp = p_resp_msg;
+  }
+
+  return ret;
+}
+
+int hb_network_send_receive(const char *server_url, hb_samp_package_header_t **p_resp){
+
+  int ret = 0;
+  hb_samp_package_header_t *p_resp_msg;
+
+  if(NULL == server_url){
+    ret = -1;
+    return ret;
+  }
+
+  ret = sp_heart_beat_loop(&p_resp_msg);
+  
+  if(0 != ret)
+  {
+      fprintf(stderr, "\nError, call sp_heart_beat_loop fail [%s].",
           __FUNCTION__);
   }
   else

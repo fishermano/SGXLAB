@@ -17,9 +17,9 @@ typedef struct dev_data_t{
   uint8_t data[SECRET_DATA_SIZE];
 }dev_data_t;
 
-typedef enum _hb_status{
-  STATUS_HB_INACTIVE,
-  STATUS_HB_ACTIVE,
-}hb_status;
+typedef struct heartbeat_data_t{
+  uint8_t r;
+  uint8_t is_revoked; //0 is not revoked; 1 is revoked
+}heartbeat_data_t;
 
 #endif

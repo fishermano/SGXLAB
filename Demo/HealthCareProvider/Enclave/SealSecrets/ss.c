@@ -118,11 +118,11 @@ static sgx_status_t verify_sealed_data(
 sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log_size){
   ocall_print("testing enclave function: ecall_create_sealed_policy()");
 
-  if(STATUS_HB_ACTIVE != hb_state){
-    ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
-
-    return SGX_ERROR_UNEXPECTED;
-  }
+  // if(STATUS_HB_ACTIVE != hb_state){
+  //   ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
+  //
+  //   return SGX_ERROR_UNEXPECTED;
+  // }
 
   sgx_status_t ret = SGX_SUCCESS;
   int busy_retry_times = 2;
@@ -203,11 +203,11 @@ sgx_status_t ecall_create_sealed_policy(uint8_t* sealed_log, uint32_t sealed_log
 sgx_status_t ecall_perform_sealed_policy(const uint8_t* sealed_log, uint32_t sealed_log_size){
   ocall_print("\ntesting enclave function: ecall_perform_sealed_policy()");
 
-  if(STATUS_HB_ACTIVE != hb_state){
-    ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
-
-    return SGX_ERROR_UNEXPECTED;
-  }
+  // if(STATUS_HB_ACTIVE != hb_state){
+  //   ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
+  //
+  //   return SGX_ERROR_UNEXPECTED;
+  // }
 
   sgx_status_t ret = SGX_SUCCESS;
   int busy_retry_times = 2;

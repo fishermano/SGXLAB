@@ -14,11 +14,11 @@ sgx_status_t ecall_perform_statistics(uint8_t* p_secret_1, uint32_t secret_size_
   float mean = 0.0;
   float variance = 0.0;
 
-  if(STATUS_HB_ACTIVE != hb_state){
-    ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
-
-    return SGX_ERROR_UNEXPECTED;
-  }
+  // if(STATUS_HB_ACTIVE != hb_state){
+  //   ocall_print("\nHeartbeat mechanism is not active, please make sure to active it by revoking ecall_start_heartbeat()\n");
+  //
+  //   return SGX_ERROR_UNEXPECTED;
+  // }
 
   if(NULL == device_keys){
     ocall_print("\ncurrent key set is null, keys can be requested or uncovered from second storage\n");
