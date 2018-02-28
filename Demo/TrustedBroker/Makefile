@@ -59,12 +59,24 @@ Policy_Management_Link_Flags := -shared
 
 Policy_Management_C_Objects := $(Policy_Management_C_Files:.c=.o)
 
+######## Heartbeat Settings ########
+
+Heartbeat_C_Files := Heartbeat/heartbeat.c
+
+Heartbeat_Include_Paths := -IRemoteAttestation -IHeartbeat -IThirdPartyLibrary -IKeyManagement
+
+Heartbeat_C_Flags := -fPIC -Wno-attributes $(Heartbeat_Include_Paths)
+Heartbeat_Cpp_Flags := $(Heartbeat_C_Flags) -std=c++11
+Heartbeat_Link_Flags := -shared -LThirdPartyLibrary -lsample_libcrypto
+
+Heartbeat_C_Objects := $(Heartbeat_C_Files:.c=.o)
+
 
 .PHONY: all
 
 
 ######## Service Provider Objects ########
-all: libremote_attestation.so libkey_management.so libdata_upload.so
+all: libremote_attestation.so libkey_management.so libdata_upload.so libheartbeat.so
 
 RemoteAttestation/%.o: RemoteAttestation/%.c
 	@$(CXX) $(Remote_Attestation_C_Flags) -c $< -o $@
@@ -86,6 +98,10 @@ PolicyManagement/%.o: PolicyManagement/%.c
 		@$(CXX) $(Policy_Management_C_Flags) -c $< -o $@
 		@echo "CXX  <=  $<"
 
+Heartbeat/%.o: Heartbeat/%.c
+	@$(CXX) $(Heartbeat_C_Flags) -c $< -o $@
+	@echo "CXX  <=  $<"
+
 libremote_attestation.so: $(Remote_Attestation_C_Objects)
 	@$(CXX) $^ -o $@ $(Remote_Attestation_Link_Flags)
 	@echo "LINK =>  $@"
@@ -96,6 +112,10 @@ libkey_management.so: $(Key_Management_C_Objects) $(Policy_Management_C_Objects)
 
 libdata_upload.so: $(Data_Upload_C_Objects) $(Data_Sample_C_Objects)
 		@$(CXX) $^ -o $@ $(Data_Upload_Link_Flags)
+		@echo "LINK =>  $@"
+
+libheartbeat.so: $(Heartbeat_C_Objects)
+		@$(CXX) $^ -o $@ $(Heartbeat_Link_Flags)
 		@echo "LINK =>  $@"
 
 .PHONY: clean
