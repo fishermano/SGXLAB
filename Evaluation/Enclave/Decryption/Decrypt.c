@@ -9,7 +9,7 @@
 
 #include "string.h"
 
-#define DATA_SIZE 1000
+#define DATA_SIZE 10000
 
 uint8_t shared_key[16] = {
   0x72, 0xee, 0x30, 0xb0,
