@@ -9,7 +9,7 @@
 
 #include "string.h"
 
-#define DATA_SIZE 1
+#define DATA_SIZE 1000
 
 uint8_t shared_key[16] = {
   0x72, 0xee, 0x30, 0xb0,
@@ -19,8 +19,8 @@ uint8_t shared_key[16] = {
 };
 
 struct file_t {
-    uint8_t payload_size;
     uint8_t payload_tag[16];
+    uint32_t payload_size;
     uint8_t payload[DATA_SIZE];
 };
 
@@ -59,10 +59,10 @@ sgx_status_t ecall_evaluate_decryption(uint8_t *p_files, uint32_t file_number, u
   uint8_t tag[16] = {0};
   size_t tag_len = 16;
 
-  struct file_t *file = (struct file_t *)malloc(DATA_SIZE + 17);
+  struct file_t *file = (struct file_t *)malloc(DATA_SIZE + 20);
 
   for(uint32_t i = 0; i < file_number; i++){
-    memcpy(file, p_files, DATA_SIZE + 17);
+    memcpy(file, p_files, DATA_SIZE + 20);
 
     ret = decryption(shared_key,
       iv, iv_len,
@@ -76,7 +76,7 @@ sgx_status_t ecall_evaluate_decryption(uint8_t *p_files, uint32_t file_number, u
     //   return OPERATION_FAIL;
     // }
 
-    p_files = p_files + DATA_SIZE + 17;
+    p_files = p_files + DATA_SIZE + 20;
   }
 
   return ret;
