@@ -1,9 +1,0 @@
-/* Decrypt.edl - an enclave for decryption*/
-enclave{
-  trusted{
-    public void ecall_decrypt(void);
-  };
-  untrusted{
-    int ocall_fetch_data(int size);
-  };
-};

@@ -41,6 +41,12 @@
 
 #include <time.h>
 
+#include "evaluation.h"
+
+#define RESULT_FILE "./results.txt"
+#define BASELINE_RESULT_FILE "./baseline_results.txt"
+
+#define SAMPLE_SP_IV_SIZE        12
 
 #ifndef SAFE_FREE
 #define SAFE_FREE(ptr) {if (NULL != (ptr)) {free(ptr); (ptr) = NULL;}}
@@ -204,6 +210,16 @@ int SGX_CDECL main(int argc, char *argv[]){
   uint8_t evaluation_data_2[8] = {
     0x39, 0x85, 0x37, 0xfe, 0xad, 0x1f, 0xc7, 0x59
   };
+
+  #define FILE_NUM 100000
+  enc_file eval_files[FILE_NUM] = {0};
+  uint8_t ssk[16] = {
+    0x72, 0xee, 0x30, 0xb0,
+    0x1d, 0xd9, 0x11, 0x38,
+    0x24, 0x11, 0x14, 0x3a,
+    0xe2, 0xaa, 0x60, 0x38
+  };
+  uint8_t aes_gcm_iv[12] = {0};
 
   /*
     define retry parameters
@@ -622,8 +638,64 @@ int SGX_CDECL main(int argc, char *argv[]){
       }
     }
     fprintf(OUTPUT, "\nSecret successfully received from server.");
-    fprintf(OUTPUT, "\nRemote attestation success!");
+    fprintf(OUTPUT, "\nRemote attestation success!\n\n");
   }
+
+  /*
+    evaluation
+  */
+
+
+  // for(int q = 0; q < FILE_NUM; q++){
+  //   sample_rijndael128GCM_encrypt(&ssk,
+  //           &evaluation_data_1[0],
+  //           8,
+  //           eval_files[q].payload,
+  //           &aes_gcm_iv[0],
+  //           SAMPLE_SP_IV_SIZE,
+  //           NULL,
+  //           0,
+  //           &eval_files[q].payload_tag);
+  //   eval_files[q].payload_size = 8;
+  // }
+  //
+  // clock_t start, end;
+  // double exe_time;
+  // int v;
+  //
+  // for(v = 1000; v <= FILE_NUM; ){
+  //   start = clock();
+  //   // for(int b = 0; b < v; b++){
+  //   //   ret = sgx_rijndael128GCM_decrypt(&ssk, eval_files[b].payload, eval_files[b].payload_size, &evaluation_data_2[0], &aes_gcm_iv[0], 12, NULL, 0, (const sgx_aes_gcm_128bit_tag_t *)(eval_files[b].payload_tag));
+  //   //   if(SGX_SUCCESS != ret){
+  //   //     fprintf(OUTPUT, "\nError, evaluation decryption using shared key based AESGCM failed in [%s]. ret = 0x%0x.", __FUNCTION__, ret);
+  //   //   }
+  //   // }
+  //   end = clock();
+  //   exe_time = (double)(end - start)/CLOCKS_PER_SEC;
+  //   // printf("\nfile numbers: %d; time: %lf\n", FILE_NUM, exe_time);
+  //   printf("\nwriting to baseline result file\n");
+  //   write_result(BASELINE_RESULT_FILE, v, exe_time);
+  //   v = v + 1000;
+  // }
+  //
+  //
+  // for(v = 1000; v <= FILE_NUM; ){
+  //   start = clock();
+  //   ret = ecall_evaluate_decryption(global_eid, &status, &eval_files[0].payload_size, v, v*32);
+  //   end = clock();
+  //   exe_time = (double)(end - start)/CLOCKS_PER_SEC;
+  //   // printf("\nfile numbers: %d; time: %lf\n", FILE_NUM, exe_time);
+  //   printf("\nwriting to result file\n");
+  //   write_result(RESULT_FILE, v, exe_time);
+  //   v = v + 1000;
+  //
+  //   if((SGX_SUCCESS != ret) || (SGX_SUCCESS != status)){
+  //     fprintf(OUTPUT, "\nError, evaluation decryption using shared key based AESGCM failed in [%s]. ret = 0x%0x. status = 0x%0x", __FUNCTION__, ret, status);
+  //   }
+  // }
+
+
 
 CLEANUP:
 

@@ -1,5 +1,10 @@
 #include "sgx_ukey_exchange.h"
 
+#include <stdio.h>
+#include <dirent.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "utils.h"
 #include "remote_attestation_result.h"
 
@@ -218,7 +223,7 @@ int hb_network_send_receive(const char *server_url, hb_samp_package_header_t **p
   }
 
   ret = sp_heart_beat_loop(&p_resp_msg);
-  
+
   if(0 != ret)
   {
       fprintf(stderr, "\nError, call sp_heart_beat_loop fail [%s].",
@@ -230,4 +235,15 @@ int hb_network_send_receive(const char *server_url, hb_samp_package_header_t **p
   }
 
   return ret;
+}
+
+void write_result(const char *res_file, int file_num, double dec_time){
+  FILE *out = fopen(res_file, "a");
+  if (out == NULL){
+    printf("cannot open file %s\n", res_file);
+    return;
+  }
+  fprintf(out, "%d,%lf\n", file_num, dec_time);
+  fclose(out);
+  return;
 }

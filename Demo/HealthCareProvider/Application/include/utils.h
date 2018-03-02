@@ -27,4 +27,6 @@ int dr_network_send_receive(const char *server_url, const uint8_t dev_id, const 
 
 int hb_network_send_receive(const char *server_url, hb_samp_package_header_t **p_resp);
 
+void write_result(const char *res_file, int file_num, double dec_time);
+
 #endif

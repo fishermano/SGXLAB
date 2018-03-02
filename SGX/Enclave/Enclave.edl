@@ -1,8 +1,0 @@
-enclave{
-  from "KP_ABE/Decrypt.edl" import *;
-
-  untrusted{
-    void ocall_print([in, string]const char* str);
-    void ocall_print_int(int num);
-  };
-};

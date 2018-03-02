@@ -2,7 +2,7 @@
 
 enclave{
 
-  from "sgx_tae_service.edl" import *;
+  /*from "sgx_tae_service.edl" import *;*/
 
   trusted{
 

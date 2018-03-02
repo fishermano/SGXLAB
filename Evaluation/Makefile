@@ -43,8 +43,8 @@ else
 	Urts_Library_Name := sgx_urts
 endif
 
-App_C_Files := $(wildcard Application/*.c)
-App_Include_Paths := -I$(SGX_SDK)/include -I. -IIncludes -IApplication -IApplication/include
+App_Cpp_Files := App/App.c
+App_Include_Paths := -IApp -I$(SGX_SDK)/include
 
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
 
@@ -61,7 +61,7 @@ else
 endif
 
 App_Cpp_Flags := $(App_C_Flags) -std=c++11
-App_Link_Flags := $(SGX_COMMON_CFLAGS) -L$(SGX_LIBRARY_PATH) -LThirdPartyLibrary -l$(Urts_Library_Name) -lsgx_ukey_exchange -lpthread -lremote_attestation -lkey_management -ldata_upload -lsample_libcrypto -lheartbeat -Wl,-rpath=$(CURDIR)/ThirdPartyLibrary -Wl,-rpath=$(CURDIR)
+App_Link_Flags := $(SGX_COMMON_CFLAGS) -L$(SGX_LIBRARY_PATH) -LApp -l$(Urts_Library_Name) -lpthread -lmyobject
 
 ifneq ($(SGX_MODE), HW)
 	App_Link_Flags += -lsgx_uae_service_sim
@@ -69,9 +69,9 @@ else
 	App_Link_Flags += -lsgx_uae_service
 endif
 
-App_C_Objects := $(App_C_Files:.c=.o)
+App_Cpp_Objects := $(App_Cpp_Files:.c=.o)
 
-App_Name := demo_app
+App_Name := app
 
 ######## Enclave Settings ########
 
@@ -84,8 +84,8 @@ else
 endif
 Crypto_Library_Name := sgx_tcrypto
 
-Enclave_C_Files := $(wildcard Enclave/*.c) $(wildcard Enclave/Functions/*.c) $(wildcard Enclave/Heartbeat/*.c) $(wildcard Enclave/RemoteAttestation/*.c) $(wildcard Enclave/SealSecrets/*.c) $(wildcard Enclave/KeyManagement/*.c) $(wildcard Enclave/Evaluation/*.c)
-Enclave_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc  -I$(SGX_SDK)/include/libcxx
+Enclave_Cpp_Files := $(wildcard Enclave/Decryption/*.c)
+Enclave_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx -IEnclave/GMP/Includes -IEnclave/PBC/Includes -IEnclave/MyObjects/Includes
 
 CC_BELOW_4_9 := $(shell expr "`$(CC) -dumpversion`" \< "4.9")
 ifeq ($(CC_BELOW_4_9), 1)
@@ -103,19 +103,19 @@ Enclave_Cpp_Flags := $(Enclave_C_Flags) -std=c++11 -nostdinc++
 #       Use `--start-group' and `--end-group' to link these libraries.
 # Do NOT move the libraries linked with `--start-group' and `--end-group' within `--whole-archive' and `--no-whole-archive' options.
 # Otherwise, you may get some undesirable errors.
-Enclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) \
+Enclave_Link_Flags := $(SGX_COMMON_CFLAGS) -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L$(SGX_LIBRARY_PATH) -LEnclave/GMP -LEnclave/PBC -LEnclave/MyObjects\
 	-Wl,--whole-archive -l$(Trts_Library_Name) -Wl,--no-whole-archive \
-	-Wl,--start-group -lsgx_tstdc -lsgx_tcxx -lsgx_tkey_exchange -l$(Crypto_Library_Name) -l$(Service_Library_Name) -Wl,--end-group \
+	-Wl,--start-group -lsgx_tstdc -lsgx_tcxx -l$(Crypto_Library_Name) -l$(Service_Library_Name) -lmyobject -lcalculation -lgmp -lpbc -Wl,--end-group \
 	-Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined \
 	-Wl,-pie,-eenclave_entry -Wl,--export-dynamic  \
 	-Wl,--defsym,__ImageBase=0 -Wl,--gc-sections   \
-	-Wl,--version-script=Enclave/demo_enclave.lds
+	-Wl,--version-script=Enclave/Enclave.lds
 
-Enclave_C_Objects := $(Enclave_C_Files:.c=.o)
+Enclave_Cpp_Objects := $(Enclave_Cpp_Files:.c=.o)
 
-Enclave_Name := demo_enclave.so
-Signed_Enclave_Name := demo_enclave.signed.so
-Enclave_Config_File := Enclave/demo_enclave.config.xml
+Enclave_Name := enclave.so
+Signed_Enclave_Name := enclave.signed.so
+Enclave_Config_File := Enclave/Enclave.config.xml
 
 ifeq ($(SGX_MODE), HW)
 ifeq ($(SGX_DEBUG), 1)
@@ -170,49 +170,49 @@ endif
 
 ######## App Objects ########
 
-Application/demo_enclave_u.c: $(SGX_EDGER8R) Enclave/demo_enclave.edl
-		@cd Application && $(SGX_EDGER8R) --untrusted ../Enclave/demo_enclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
+App/Enclave_u.c: $(SGX_EDGER8R) Enclave/Enclave.edl
+		@cd App && $(SGX_EDGER8R) --untrusted ../Enclave/Enclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
 		@echo "GEN => $@"
 
-Application/demo_enclave_u.o: Application/demo_enclave_u.c
+App/Enclave_u.o: App/Enclave_u.c
 	@$(CC) $(App_C_Flags) -c $< -o $@
-	@echo "CC <= $<"
+	@echo "GEN => $@"
 
-Application/%.o: Application/%.c
-	@$(CXX) $(App_Cpp_Flags) -c $< -o $@
-	@echo "CXX  <=  $<"
+App/%.o: App/%.c
+	@$(CC) $(App_C_Flags) -c $< -o $@
+	@echo "CC  <=  $<"
 
-$(App_Name): Application/demo_enclave_u.o $(App_C_Objects)
-	@$(CXX) $^ -o $@ $(App_Link_Flags)
+$(App_Name): App/Enclave_u.o $(App_Cpp_Objects)
+	@$(CC) $^ -o $@ $(App_Link_Flags)
 	@echo "LINK => $@"
 
 .config_$(Build_Mode)_$(SGX_ARCH):
-	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) Application/demo_enclave_u.* $(Enclave_C_Objects) Enclave/demo_enclave_t.*
+	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) App/Enclave_u.* $(Enclave_Cpp_Objects) Enclave/Enclave_t.*
 	@touch .config_$(Build_Mode)_$(SGX_ARCH)
 
 ######## Enclave Objects ########
 
-Enclave/demo_enclave_t.c: $(SGX_EDGER8R) Enclave/demo_enclave.edl
-	@cd Enclave && $(SGX_EDGER8R) --trusted ../Enclave/demo_enclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
+Enclave/Enclave_t.c: $(SGX_EDGER8R) Enclave/Enclave.edl
+	@cd Enclave && $(SGX_EDGER8R) --trusted ../Enclave/Enclave.edl --search-path ../Enclave --search-path $(SGX_SDK)/include
 	@echo "GEN  =>  $@"
 
-Enclave/demo_enclave_t.o: Enclave/demo_enclave_t.c
+Enclave/Enclave_t.o: Enclave/Enclave_t.c
 	@$(CC) $(Enclave_C_Flags) -c $< -o $@
 	@echo "CC   <=  $<"
 
 Enclave/%.o: Enclave/%.c
-	@$(CXX) $(App_Cpp_Flags) -c $< -o $@
-	@echo "CXX  <=  $<"
+	@$(CC) $(Enclave_C_Flags) -c $< -o $@
+	@echo "CC  <=  $<"
 
-$(Enclave_Name): Enclave/demo_enclave_t.o $(Enclave_C_Objects)
-	@$(CXX) $^ -o $@ $(Enclave_Link_Flags)
+$(Enclave_Name): Enclave/Enclave_t.o $(Enclave_Cpp_Objects)
+	@$(CC) $^ -o $@ $(Enclave_Link_Flags)
 	@echo "LINK =>  $@"
 
 $(Signed_Enclave_Name): $(Enclave_Name)
-	@$(SGX_ENCLAVE_SIGNER) sign -key Enclave/demo_enclave_private.pem -enclave $(Enclave_Name) -out $@ -config $(Enclave_Config_File)
+	@$(SGX_ENCLAVE_SIGNER) sign -key Enclave/Enclave_private.pem -enclave $(Enclave_Name) -out $@ -config $(Enclave_Config_File)
 	@echo "SIGN =>  $@"
 
 .PHONY: clean
 
 clean:
-	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_C_Objects) Application/demo_enclave_u.* $(Enclave_C_Objects) Enclave/demo_enclave_t.*
+	@rm -f .config_* $(App_Name) $(Enclave_Name) $(Signed_Enclave_Name) $(App_Cpp_Objects) App/Enclave_u.* $(Enclave_Cpp_Objects) Enclave/Enclave_t.*
