@@ -1,0 +1,6 @@
+/* Encrypt.edl - an enclave for encryption */
+enclave{
+  trusted{
+    public sgx_status_t ecall_evaluate_encryption(uint32_t file_number);
+  };
+};

@@ -18,6 +18,7 @@ extern "C" {
 
 void ecall_decrypt();
 sgx_status_t ecall_evaluate_decryption(uint8_t* p_files, uint32_t file_number, uint32_t total_size);
+sgx_status_t ecall_evaluate_encryption(uint32_t file_number);
 
 sgx_status_t SGX_CDECL ocall_print(const char* str);
 sgx_status_t SGX_CDECL ocall_print_int(int num);

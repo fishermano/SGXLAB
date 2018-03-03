@@ -84,7 +84,7 @@ else
 endif
 Crypto_Library_Name := sgx_tcrypto
 
-Enclave_Cpp_Files := $(wildcard Enclave/Decryption/*.c)
+Enclave_Cpp_Files := $(wildcard Enclave/Decryption/*.c) $(wildcard Enclave/Encryption/*.c)
 Enclave_Include_Paths := -I$(SGX_SDK)/include -I$(SGX_SDK)/include/tlibc -I$(SGX_SDK)/include/libcxx -IEnclave/GMP/Includes -IEnclave/PBC/Includes -IEnclave/MyObjects/Includes
 
 CC_BELOW_4_9 := $(shell expr "`$(CC) -dumpversion`" \< "4.9")

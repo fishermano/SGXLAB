@@ -8,6 +8,11 @@ typedef struct ms_ecall_evaluate_decryption_t {
 	uint32_t ms_total_size;
 } ms_ecall_evaluate_decryption_t;
 
+typedef struct ms_ecall_evaluate_encryption_t {
+	sgx_status_t ms_retval;
+	uint32_t ms_file_number;
+} ms_ecall_evaluate_encryption_t;
+
 typedef struct ms_ocall_print_t {
 	char* ms_str;
 } ms_ocall_print_t;
@@ -57,6 +62,16 @@ sgx_status_t ecall_evaluate_decryption(sgx_enclave_id_t eid, sgx_status_t* retva
 	ms.ms_file_number = file_number;
 	ms.ms_total_size = total_size;
 	status = sgx_ecall(eid, 1, &ocall_table_Enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
+	return status;
+}
+
+sgx_status_t ecall_evaluate_encryption(sgx_enclave_id_t eid, sgx_status_t* retval, uint32_t file_number)
+{
+	sgx_status_t status;
+	ms_ecall_evaluate_encryption_t ms;
+	ms.ms_file_number = file_number;
+	status = sgx_ecall(eid, 2, &ocall_table_Enclave, &ms);
 	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }

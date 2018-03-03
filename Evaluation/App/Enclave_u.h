@@ -21,6 +21,7 @@ void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_print_int, (int num));
 
 sgx_status_t ecall_decrypt(sgx_enclave_id_t eid);
 sgx_status_t ecall_evaluate_decryption(sgx_enclave_id_t eid, sgx_status_t* retval, uint8_t* p_files, uint32_t file_number, uint32_t total_size);
+sgx_status_t ecall_evaluate_encryption(sgx_enclave_id_t eid, sgx_status_t* retval, uint32_t file_number);
 
 #ifdef __cplusplus
 }
