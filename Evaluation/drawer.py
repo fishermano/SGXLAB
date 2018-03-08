@@ -26,7 +26,6 @@ def plot_data(X, Y, x_label, y_label):
 	pylab.show()
 
 (file_num_1bytes, exe_time_1bytes) = load_data('./results/results_1bytes.txt')
-(file_num_100bytes, exe_time_100bytes) = load_data('./results/results_100bytes.txt')
 (file_num_1kbytes, exe_time_1kbytes) = load_data('./results/results_1kbytes.txt')
 (file_num_10kbytes, exe_time_10kbytes) = load_data('./results/results_10kbytes.txt')
 
