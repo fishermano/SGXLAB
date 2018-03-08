@@ -1,6 +1,6 @@
 # SGX_LAB
 
-This is a prototype project for the paper "A Secure Remote Patient Monitoring Framework Supporting Efficienct Fine-grained Access Control and Data Processing in IoT" targeting SecureCom 2018. 
+This is a prototype project for the paper "A Secure Remote Patient Monitoring Framework Supporting Efficienct Fine-grained Access Control and Data Processing in IoT" targeting SecureCom 2018.
 
 It mainly inlcudes two parts: Demo and Evaluation.
 
@@ -8,7 +8,7 @@ Demo
 ---------------------------------------------
 This part implements the prototype described in Section Implementation, which involves the entities, i.e., trusted broker and health care provider.
 
-For the trusted broker, we implement the following six function modules. 
+For the trusted broker, we implement the following six function modules.
 ------------
 DataSample: To simulate the activities of monitoring devices.
 
@@ -34,7 +34,7 @@ KeyManagement: It implements interfaces that load assigned keys into the enclave
 
 RemoteAttestation: It implements interfaces that facilitate remote attestation.
 
-SealSecrets: It implements interfaces that enable to flush the secrets within the enclave to the untrusted secondary storage. 
+SealSecrets: It implements interfaces that enable to flush the secrets within the enclave to the untrusted secondary storage.
 
 Evaluation
 ---------------------------------------------
