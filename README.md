@@ -46,7 +46,7 @@ $python encryption_drawer.py
 
 Build
 ---------------------------------------------
-$souce environment (you should replace the 'environment' file with the generated one located in you installed SGX_SDK directory)
+$souce environment (You should replace the 'environment' file with the generated one located in you installed SGX_SDK directory)
 
 $make
 or
