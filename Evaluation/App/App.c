@@ -1304,28 +1304,28 @@ int SGX_CDECL main(int argc, char *argv[]){
   double exe_time;
   int v;
 
-  printf("\nStarting baseline encryption data\n");
-  for(v = START_FILE_NUM; v <= FILE_NUM; ){
-    start = clock();
-    for(int b = 0; b < v; b++){
-      ret = encryption(ssk,
-        iv, iv_len,
-        add, add_len,
-        evaluation_data, length,
-        eval_files[b].payload,
-        eval_files[b].payload_tag, tag_len);
-      eval_files[b].payload_size = DATA_SIZE;
-      if(OPERATION_SUC != ret){
-        fprintf(stderr, "\nError, evaluation encryption using shared key based AESGCM failed in [%s]. ret = 0x%0x.", __FUNCTION__, ret);
-      }
-    }
-    end = clock();
-    exe_time = (double)(end - start)/CLOCKS_PER_SEC;
-
-    printf("\nwriting to baseline result file: %d \n", v);
-    write_result(Encryption_BASELINE_RESULT_FILE, v, exe_time);
-    v = v + FILE_NUM_STEP;
-  }
+  // printf("\nStarting baseline encryption data\n");
+  // for(v = START_FILE_NUM; v <= FILE_NUM; ){
+  //   start = clock();
+  //   for(int b = 0; b < v; b++){
+  //     ret = encryption(ssk,
+  //       iv, iv_len,
+  //       add, add_len,
+  //       evaluation_data, length,
+  //       eval_files[b].payload,
+  //       eval_files[b].payload_tag, tag_len);
+  //     eval_files[b].payload_size = DATA_SIZE;
+  //     if(OPERATION_SUC != ret){
+  //       fprintf(stderr, "\nError, evaluation encryption using shared key based AESGCM failed in [%s]. ret = 0x%0x.", __FUNCTION__, ret);
+  //     }
+  //   }
+  //   end = clock();
+  //   exe_time = (double)(end - start)/CLOCKS_PER_SEC;
+  //
+  //   printf("\nwriting to baseline result file: %d \n", v);
+  //   write_result(Encryption_BASELINE_RESULT_FILE, v, exe_time);
+  //   v = v + FILE_NUM_STEP;
+  // }
 
   printf("\nStarting encryption data\n");
 

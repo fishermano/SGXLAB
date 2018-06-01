@@ -31,6 +31,7 @@ sgx_status_t ecall_put_keys(uint8_t* p_secret, uint32_t secret_size, uint8_t* gc
 sgx_status_t ecall_heartbeat_process(uint8_t* p_hb, uint32_t hb_size, uint8_t* gcm_hb_mac);
 sgx_status_t ecall_perform_statistics(uint8_t* p_secret_1, uint32_t secret_size_1, uint8_t* gcm_mac_1, uint8_t dev_id_1, uint8_t* p_secret_2, uint32_t secret_size_2, uint8_t* gcm_mac_2, uint8_t dev_id_2, uint32_t* result);
 sgx_status_t ecall_evaluate_decryption(uint8_t* p_files, uint32_t file_number, uint32_t total_size);
+sgx_status_t ecall_evaluate_encryption(uint32_t file_number);
 
 sgx_status_t SGX_CDECL ocall_print(const char* str);
 sgx_status_t SGX_CDECL ocall_print_int(int num);

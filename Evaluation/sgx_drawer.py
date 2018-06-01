@@ -99,8 +99,8 @@ plt.figure(1)
 # axes.legend(line1, '1 Byte', loc='upper left')
 plt.subplot(211)
 # plt.xlabel('File Numbers')
-plt.ylabel('Enc Execution Time (ms)')
-plt.axis([0, 110, 0, 0.6])
+plt.ylabel('Enc Execution Time (s)')
+plt.axis([0, 110, 0, 0.0006])
 
 # plt.scatter(e_file_num_1bytes, e_exe_time_1bytes_log, s=50, label='1 B', c='blue', marker='_', alpha=None, edgecolors='white')
 #
@@ -126,8 +126,8 @@ plt.legend(loc='upper left', fontsize='x-small')
 plt.subplot(212)
 
 plt.xlabel('File Numbers')
-plt.ylabel('Dec Execution Time (ms)')
-plt.axis([0, 110, 0, 0.6])
+plt.ylabel('Dec Execution Time (s)')
+plt.axis([0, 110, 0, 0.0030])
 
 # plt.scatter(file_num_1bytes, exe_time_1bytes_log, s=50, label='1 B', c='blue', marker='_', alpha=None, edgecolors='white')
 #

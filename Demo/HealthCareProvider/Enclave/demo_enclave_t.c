@@ -115,6 +115,11 @@ typedef struct ms_ecall_evaluate_decryption_t {
 	uint32_t ms_total_size;
 } ms_ecall_evaluate_decryption_t;
 
+typedef struct ms_ecall_evaluate_encryption_t {
+	sgx_status_t ms_retval;
+	uint32_t ms_file_number;
+} ms_ecall_evaluate_encryption_t;
+
 typedef struct ms_ocall_print_t {
 	char* ms_str;
 } ms_ocall_print_t;
@@ -728,11 +733,24 @@ err:
 	return status;
 }
 
+static sgx_status_t SGX_CDECL sgx_ecall_evaluate_encryption(void* pms)
+{
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_evaluate_encryption_t));
+	ms_ecall_evaluate_encryption_t* ms = SGX_CAST(ms_ecall_evaluate_encryption_t*, pms);
+	sgx_status_t status = SGX_SUCCESS;
+
+
+	ms->ms_retval = ecall_evaluate_encryption(ms->ms_file_number);
+
+
+	return status;
+}
+
 SGX_EXTERNC const struct {
 	size_t nr_ecall;
-	struct {void* ecall_addr; uint8_t is_priv;} ecall_table[13];
+	struct {void* ecall_addr; uint8_t is_priv;} ecall_table[14];
 } g_ecall_table = {
-	13,
+	14,
 	{
 		{(void*)(uintptr_t)sgx_ecall_init_ra, 0},
 		{(void*)(uintptr_t)sgx_ecall_close_ra, 0},
@@ -747,26 +765,27 @@ SGX_EXTERNC const struct {
 		{(void*)(uintptr_t)sgx_ecall_heartbeat_process, 0},
 		{(void*)(uintptr_t)sgx_ecall_perform_statistics, 0},
 		{(void*)(uintptr_t)sgx_ecall_evaluate_decryption, 0},
+		{(void*)(uintptr_t)sgx_ecall_evaluate_encryption, 0},
 	}
 };
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[11][13];
+	uint8_t entry_table[11][14];
 } g_dyn_entry_table = {
 	11,
 	{
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
 	}
 };
 
